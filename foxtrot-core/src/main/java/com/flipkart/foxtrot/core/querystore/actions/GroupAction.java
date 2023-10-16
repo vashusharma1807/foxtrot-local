@@ -35,7 +35,7 @@ import com.flipkart.foxtrot.common.util.CollectionUtils;
 import com.flipkart.foxtrot.common.visitor.CountPrecisionThresholdVisitorAdapter;
 import com.flipkart.foxtrot.core.common.Action;
 import com.flipkart.foxtrot.core.common.PeriodSelector;
-import com.flipkart.foxtrot.core.config.ElasticsearchTuningConfig;
+import com.flipkart.foxtrot.core.config.SearchDatabaseTuningConfig;
 import com.flipkart.foxtrot.core.exception.FoxtrotExceptions;
 import com.flipkart.foxtrot.core.querystore.QueryStore;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsLoader;
@@ -79,11 +79,11 @@ public class GroupAction extends Action<GroupRequest> {
     private static final long MAX_CARDINALITY = 50000;
     private static final long MIN_ESTIMATION_THRESHOLD = 1000;
     private static final double PROBABILITY_CUT_OFF = 0.5;
-    private final ElasticsearchTuningConfig elasticsearchTuningConfig;
+    private final SearchDatabaseTuningConfig searchDatabaseTuningConfig;
 
     public GroupAction(GroupRequest parameter, AnalyticsLoader analyticsLoader) {
         super(parameter, analyticsLoader);
-        this.elasticsearchTuningConfig = analyticsLoader.getElasticsearchTuningConfig();
+        this.searchDatabaseTuningConfig = analyticsLoader.getSearchDatabaseTuningConfig();
     }
 
     @Override
@@ -722,8 +722,8 @@ public class GroupAction extends Action<GroupRequest> {
                                            ? Sets.newHashSet(
                                                    Utils.buildCardinalityAggregation(getParameter().getUniqueCountOn(),
                                                                                      parameter.accept(new CountPrecisionThresholdVisitorAdapter(
-                                                                                             elasticsearchTuningConfig.getPrecisionThreshold()))))
-                                           : Sets.newHashSet(), elasticsearchTuningConfig.getAggregationSize());
+                                                                                             searchDatabaseTuningConfig.getPrecisionThreshold()))))
+                                           : Sets.newHashSet(), searchDatabaseTuningConfig.getAggregationSize());
 
     }
 

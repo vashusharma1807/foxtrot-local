@@ -20,10 +20,15 @@ import com.flipkart.foxtrot.core.datastore.impl.hbase.HBaseUtil;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConfig;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConnection;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchUtils;
+import com.flipkart.foxtrot.core.querystore.impl.OpensearchConfig;
+import com.flipkart.foxtrot.core.querystore.impl.OpensearchConnection;
+import com.flipkart.foxtrot.core.querystore.impl.OpensearchUtils;
 import com.flipkart.foxtrot.core.table.impl.TableMapStore;
 import com.flipkart.foxtrot.server.config.FoxtrotServerConfiguration;
-import com.flipkart.foxtrot.server.console.ElasticsearchConsolePersistence;
-import com.flipkart.foxtrot.sql.fqlstore.FqlStoreServiceImpl;
+import com.flipkart.foxtrot.server.console.impl.ElasticsearchConsolePersistence;
+import com.flipkart.foxtrot.server.console.impl.OpensearchConsolePersistence;
+import com.flipkart.foxtrot.sql.fqlstore.FqlStoreElasticsearchServiceImpl;
+import com.flipkart.foxtrot.sql.fqlstore.FqlStoreOpensearchServiceImpl;
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -50,8 +55,58 @@ public class InitializerCommand extends ConfiguredCommand<FoxtrotServerConfigura
     @Override
     protected void run(Bootstrap<FoxtrotServerConfiguration> bootstrap,
                        Namespace namespace,
-                       FoxtrotServerConfiguration configuration)
-            throws Exception {
+                       FoxtrotServerConfiguration configuration) throws Exception {
+        if (configuration.getSearchDatabaseType()
+                .equals(SearchDatabaseType.ELASTICSEARCH)) {
+            initialiseElasticsearch(configuration);
+        } else if (configuration.getSearchDatabaseType()
+                .equals(SearchDatabaseType.OPENSEARCH)) {
+            initialiseOpensearch(configuration);
+        }
+    }
+
+    private void initialiseOpensearch(FoxtrotServerConfiguration configuration) throws Exception {
+        OpensearchConfig opensearchConfig = configuration.getOpensearchConfig();
+        OpensearchConnection opensearchConnection = new OpensearchConnection(opensearchConfig);
+        opensearchConnection.start();
+
+        try {
+            org.opensearch.action.admin.cluster.health.ClusterHealthResponse clusterHealth = opensearchConnection.getClient()
+                    .cluster()
+                    .health(new org.opensearch.action.admin.cluster.health.ClusterHealthRequest(),
+                            org.opensearch.client.RequestOptions.DEFAULT);
+            int numDataNodes = clusterHealth.getNumberOfDataNodes();
+            int numReplicas = (numDataNodes < 2)
+                              ? 0
+                              : 1;
+
+            logger.info("# data nodes: {}, Setting replica count to: {}", numDataNodes, numReplicas);
+
+            createOSMetaIndex(opensearchConnection, OpensearchConsolePersistence.INDEX, numReplicas);
+            createOSMetaIndex(opensearchConnection, OpensearchConsolePersistence.INDEX_V2, numReplicas);
+            createOSMetaIndex(opensearchConnection, TableMapStore.TABLE_META_INDEX, numReplicas);
+            createOSMetaIndex(opensearchConnection, OpensearchConsolePersistence.INDEX_HISTORY, numReplicas);
+            createOSMetaIndex(opensearchConnection, FqlStoreOpensearchServiceImpl.FQL_STORE_INDEX, numReplicas);
+            createOSMetaIndex(opensearchConnection, "user-meta", numReplicas);
+            createOSMetaIndex(opensearchConnection, "tokens", numReplicas);
+
+            logger.info("Creating mapping");
+            org.opensearch.client.indices.PutIndexTemplateRequest putIndexTemplateRequest = OpensearchUtils.getClusterTemplateMapping();
+            org.opensearch.action.support.master.AcknowledgedResponse response = opensearchConnection.getClient()
+                    .indices()
+                    .putTemplate(putIndexTemplateRequest, org.opensearch.client.RequestOptions.DEFAULT);
+            logger.info("Created mapping: {}", response.isAcknowledged());
+        } finally {
+            opensearchConnection.stop();
+        }
+        logger.info("Creating hbase table");
+        HBaseUtil.createTable(configuration.getHbase(), configuration.getHbase()
+                .getTableName());
+        logger.info("Initialization complete...");
+
+    }
+
+    private void initialiseElasticsearch(FoxtrotServerConfiguration configuration) throws Exception {
         ElasticsearchConfig esConfig = configuration.getElasticsearch();
         ElasticsearchConnection connection = new ElasticsearchConnection(esConfig);
         connection.start();
@@ -67,13 +122,13 @@ public class InitializerCommand extends ConfiguredCommand<FoxtrotServerConfigura
 
             logger.info("# data nodes: {}, Setting replica count to: {}", numDataNodes, numReplicas);
 
-            createMetaIndex(connection, ElasticsearchConsolePersistence.INDEX, numReplicas);
-            createMetaIndex(connection, ElasticsearchConsolePersistence.INDEX_V2, numReplicas);
-            createMetaIndex(connection, TableMapStore.TABLE_META_INDEX, numReplicas);
-            createMetaIndex(connection, ElasticsearchConsolePersistence.INDEX_HISTORY, numReplicas);
-            createMetaIndex(connection, FqlStoreServiceImpl.FQL_STORE_INDEX, numReplicas);
-            createMetaIndex(connection, "user-meta", numReplicas);
-            createMetaIndex(connection, "tokens", numReplicas);
+            createESMetaIndex(connection, ElasticsearchConsolePersistence.INDEX, numReplicas);
+            createESMetaIndex(connection, ElasticsearchConsolePersistence.INDEX_V2, numReplicas);
+            createESMetaIndex(connection, TableMapStore.TABLE_META_INDEX, numReplicas);
+            createESMetaIndex(connection, ElasticsearchConsolePersistence.INDEX_HISTORY, numReplicas);
+            createESMetaIndex(connection, FqlStoreElasticsearchServiceImpl.FQL_STORE_INDEX, numReplicas);
+            createESMetaIndex(connection, "user-meta", numReplicas);
+            createESMetaIndex(connection, "tokens", numReplicas);
 
             logger.info("Creating mapping");
             PutIndexTemplateRequest putIndexTemplateRequest = ElasticsearchUtils.getClusterTemplateMapping();
@@ -81,18 +136,20 @@ public class InitializerCommand extends ConfiguredCommand<FoxtrotServerConfigura
                     .indices()
                     .putTemplate(putIndexTemplateRequest, RequestOptions.DEFAULT);
             logger.info("Created mapping: {}", response.isAcknowledged());
-        }
-        finally {
+        } finally {
             connection.stop();
         }
         logger.info("Creating hbase table");
-        HBaseUtil.createTable(configuration.getHbase(), configuration.getHbase().getTableName());
+        HBaseUtil.createTable(configuration.getHbase(), configuration.getHbase()
+                .getTableName());
         logger.info("Initialization complete...");
     }
 
-    private void createMetaIndex(final ElasticsearchConnection connection, final String indexName, int replicaCount) {
+    private void createESMetaIndex(final ElasticsearchConnection connection,
+                                   final String indexName,
+                                   int replicaCount) {
         try {
-            if(connection.getClient()
+            if (connection.getClient()
                     .indices()
                     .exists(new GetIndexRequest(indexName), RequestOptions.DEFAULT)) {
                 logger.info("Index {} already exists. Nothing to do.", indexName);
@@ -114,7 +171,43 @@ public class InitializerCommand extends ConfiguredCommand<FoxtrotServerConfigura
                 logger.error("Index {} could not be created.", indexName);
             }
         } catch (Exception e) {
-            if(null != e.getCause()) {
+            if (null != e.getCause()) {
+                logger.error("Index {} could not be created: {}", indexName, e.getCause()
+                        .getLocalizedMessage());
+            } else {
+                logger.error("Index {} could not be created: {}", indexName, e.getLocalizedMessage());
+            }
+        }
+    }
+
+    private void createOSMetaIndex(final OpensearchConnection connection,
+                                   final String indexName,
+                                   int replicaCount) {
+        try {
+            if (connection.getClient()
+                    .indices()
+                    .exists(new org.opensearch.client.indices.GetIndexRequest(indexName),
+                            org.opensearch.client.RequestOptions.DEFAULT)) {
+                logger.info("Index {} already exists. Nothing to do.", indexName);
+                return;
+            }
+
+            logger.info("'{}' creation started", indexName);
+            org.opensearch.common.settings.Settings settings = org.opensearch.common.settings.Settings.builder()
+                    .put("number_of_shards", 1)
+                    .put("number_of_replicas", replicaCount)
+                    .build();
+            org.opensearch.client.indices.CreateIndexRequest createIndexRequest = new org.opensearch.client.indices.CreateIndexRequest(
+                    indexName).settings(settings);
+            org.opensearch.client.indices.CreateIndexResponse response = connection.getClient()
+                    .indices()
+                    .create(createIndexRequest, org.opensearch.client.RequestOptions.DEFAULT);
+            logger.info("'{}' creation acknowledged: {}", indexName, response.isAcknowledged());
+            if (!response.isAcknowledged()) {
+                logger.error("Index {} could not be created.", indexName);
+            }
+        } catch (Exception e) {
+            if (null != e.getCause()) {
                 logger.error("Index {} could not be created: {}", indexName, e.getCause()
                         .getLocalizedMessage());
             } else {

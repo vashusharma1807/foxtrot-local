@@ -15,7 +15,9 @@
  */
 package com.flipkart.foxtrot.core.querystore.impl;
 
-import io.dropwizard.lifecycle.Managed;
+import com.flipkart.foxtrot.core.querystore.SearchDatabaseConnection;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.val;
@@ -27,9 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.vyarus.dropwizard.guice.module.installer.order.Order;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 /**
  * User: Santanu Sinha (santanu.sinha@flipkart.com)
  * Date: 14/03/14
@@ -37,7 +36,8 @@ import javax.inject.Singleton;
  */
 @Singleton
 @Order(5)
-public class ElasticsearchConnection implements Managed {
+public class ElasticsearchConnection implements SearchDatabaseConnection {
+
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchConnection.class.getSimpleName());
     @Getter
     private final ElasticsearchConfig config;
@@ -78,8 +78,16 @@ public class ElasticsearchConnection implements Managed {
 
     @SneakyThrows
     public void refresh(final String index) {
-        client
-                .indices()
+        client.indices()
                 .refresh(new RefreshRequest().indices(index));
     }
+
+    @Override
+    public long getGetQueryTimeout() {
+        if (config == null) {
+            return ElasticsearchConfig.DEFAULT_TIMEOUT;
+        }
+        return config.getGetQueryTimeout();
+    }
+
 }

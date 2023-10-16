@@ -8,7 +8,7 @@ import com.flipkart.foxtrot.core.cache.CacheManager;
 import com.flipkart.foxtrot.core.cache.impl.DistributedCacheFactory;
 import com.flipkart.foxtrot.core.cardinality.CardinalityConfig;
 import com.flipkart.foxtrot.core.common.DataDeletionManagerConfig;
-import com.flipkart.foxtrot.core.config.ElasticsearchTuningConfig;
+import com.flipkart.foxtrot.core.config.SearchDatabaseTuningConfig;
 import com.flipkart.foxtrot.core.datastore.DataStore;
 import com.flipkart.foxtrot.core.datastore.impl.hbase.HBaseDataStore;
 import com.flipkart.foxtrot.core.datastore.impl.hbase.HBaseUtil;
@@ -21,32 +21,50 @@ import com.flipkart.foxtrot.core.email.messageformatting.impl.StrSubstitutorEmai
 import com.flipkart.foxtrot.core.internalevents.InternalEventBus;
 import com.flipkart.foxtrot.core.internalevents.InternalEventBusConsumer;
 import com.flipkart.foxtrot.core.internalevents.impl.GuavaInternalEventBus;
-import com.flipkart.foxtrot.core.jobs.optimization.EsIndexOptimizationConfig;
+import com.flipkart.foxtrot.core.jobs.optimization.IndexOptimizationConfig;
 import com.flipkart.foxtrot.core.querystore.ActionExecutionObserver;
 import com.flipkart.foxtrot.core.querystore.EventPublisherActionExecutionObserver;
 import com.flipkart.foxtrot.core.querystore.QueryStore;
 import com.flipkart.foxtrot.core.querystore.handlers.MetricRecorder;
 import com.flipkart.foxtrot.core.querystore.handlers.ResponseCacheUpdater;
 import com.flipkart.foxtrot.core.querystore.handlers.SlowQueryReporter;
-import com.flipkart.foxtrot.core.querystore.impl.*;
+import com.flipkart.foxtrot.core.querystore.impl.CacheConfig;
+import com.flipkart.foxtrot.core.querystore.impl.ClusterConfig;
+import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConfig;
+import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConnection;
+import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchQueryStore;
+import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchUtils;
+import com.flipkart.foxtrot.core.querystore.impl.OpensearchConnection;
 import com.flipkart.foxtrot.core.querystore.mutator.IndexerEventMutator;
 import com.flipkart.foxtrot.core.querystore.mutator.LargeTextNodeRemover;
 import com.flipkart.foxtrot.core.table.TableManager;
 import com.flipkart.foxtrot.core.table.TableMetadataManager;
-import com.flipkart.foxtrot.core.table.impl.DistributedTableMetadataManager;
+import com.flipkart.foxtrot.core.table.impl.ElasticsearchTableMetadataManager;
 import com.flipkart.foxtrot.core.table.impl.FoxtrotTableManager;
-import com.flipkart.foxtrot.server.auth.*;
+import com.flipkart.foxtrot.server.SearchDatabaseType;
+import com.flipkart.foxtrot.server.auth.AuthConfig;
+import com.flipkart.foxtrot.server.auth.AuthStore;
+import com.flipkart.foxtrot.server.auth.IdmanAuthStore;
+import com.flipkart.foxtrot.server.auth.JwtConfig;
+import com.flipkart.foxtrot.server.auth.RoleAuthorizer;
+import com.flipkart.foxtrot.server.auth.TokenAuthenticator;
+import com.flipkart.foxtrot.server.auth.TokenType;
+import com.flipkart.foxtrot.server.auth.UserPrincipal;
+import com.flipkart.foxtrot.server.auth.authimpl.ESAuthStore;
+import com.flipkart.foxtrot.server.auth.authimpl.OpensearchAuthStore;
 import com.flipkart.foxtrot.server.auth.authprovider.AuthProvider;
 import com.flipkart.foxtrot.server.auth.authprovider.ConfiguredAuthProviderFactory;
 import com.flipkart.foxtrot.server.auth.sessionstore.DistributedSessionDataStore;
 import com.flipkart.foxtrot.server.auth.sessionstore.SessionDataStore;
 import com.flipkart.foxtrot.server.config.FoxtrotServerConfiguration;
 import com.flipkart.foxtrot.server.console.ConsolePersistence;
-import com.flipkart.foxtrot.server.console.ElasticsearchConsolePersistence;
+import com.flipkart.foxtrot.server.console.impl.ElasticsearchConsolePersistence;
+import com.flipkart.foxtrot.server.console.impl.OpensearchConsolePersistence;
 import com.flipkart.foxtrot.server.jobs.consolehistory.ConsoleHistoryConfig;
 import com.flipkart.foxtrot.server.jobs.sessioncleanup.SessionCleanupConfig;
+import com.flipkart.foxtrot.sql.fqlstore.FqlStoreElasticsearchServiceImpl;
+import com.flipkart.foxtrot.sql.fqlstore.FqlStoreOpensearchServiceImpl;
 import com.flipkart.foxtrot.sql.fqlstore.FqlStoreService;
-import com.flipkart.foxtrot.sql.fqlstore.FqlStoreServiceImpl;
 import com.foxtrot.flipkart.translator.config.SegregationConfiguration;
 import com.foxtrot.flipkart.translator.config.TranslatorConfig;
 import com.google.common.cache.CacheBuilderSpec;
@@ -62,15 +80,6 @@ import io.dropwizard.auth.CachingAuthorizer;
 import io.dropwizard.server.ServerFactory;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.util.Duration;
-import lombok.val;
-import org.apache.hadoop.conf.Configuration;
-import org.jose4j.jwa.AlgorithmConstraints;
-import org.jose4j.jws.AlgorithmIdentifiers;
-import org.jose4j.jwt.consumer.JwtConsumer;
-import org.jose4j.jwt.consumer.JwtConsumerBuilder;
-import org.jose4j.keys.HmacKey;
-
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -79,6 +88,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import javax.inject.Singleton;
+import lombok.val;
+import org.apache.hadoop.conf.Configuration;
+import org.jose4j.jwa.AlgorithmConstraints;
+import org.jose4j.jws.AlgorithmIdentifiers;
+import org.jose4j.jwt.consumer.JwtConsumer;
+import org.jose4j.jwt.consumer.JwtConsumerBuilder;
+import org.jose4j.keys.HmacKey;
 
 
 /**
@@ -87,28 +104,16 @@ import java.util.concurrent.ScheduledExecutorService;
 public class FoxtrotModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(TableMetadataManager.class)
-                .to(DistributedTableMetadataManager.class);
-        bind(DataStore.class)
-                .to(HBaseDataStore.class);
-        bind(QueryStore.class)
-                .to(ElasticsearchQueryStore.class);
-        bind(FqlStoreService.class)
-                .to(FqlStoreServiceImpl.class);
-        bind(CacheFactory.class)
-                .to(DistributedCacheFactory.class);
-        bind(InternalEventBus.class)
-                .to(GuavaInternalEventBus.class);
-        bind(InternalEventBusConsumer.class)
-                .to(AlertingSystemEventConsumer.class);
-        bind(ConsolePersistence.class)
-                .to(ElasticsearchConsolePersistence.class);
-        bind(EmailSubjectBuilder.class)
-                .to(StrSubstitutorEmailSubjectBuilder.class);
-        bind(EmailBodyBuilder.class)
-                .to(StrSubstitutorEmailBodyBuilder.class);
-        bind(TableManager.class)
-                .to(FoxtrotTableManager.class);
+        bind(TableMetadataManager.class).to(ElasticsearchTableMetadataManager.class);
+        bind(DataStore.class).to(HBaseDataStore.class);
+        bind(QueryStore.class).to(ElasticsearchQueryStore.class);
+        bind(FqlStoreService.class).to(FqlStoreElasticsearchServiceImpl.class);
+        bind(CacheFactory.class).to(DistributedCacheFactory.class);
+        bind(InternalEventBus.class).to(GuavaInternalEventBus.class);
+        bind(InternalEventBusConsumer.class).to(AlertingSystemEventConsumer.class);
+        bind(EmailSubjectBuilder.class).to(StrSubstitutorEmailSubjectBuilder.class);
+        bind(EmailBodyBuilder.class).to(StrSubstitutorEmailBodyBuilder.class);
+        bind(TableManager.class).to(FoxtrotTableManager.class);
         bind(new TypeLiteral<List<HealthCheck>>() {
         }).toProvider(HealthcheckListProvider.class);
         bind(AuthStore.class)
@@ -151,10 +156,10 @@ public class FoxtrotModule extends AbstractModule {
 
     @Provides
     @Singleton
-    public EsIndexOptimizationConfig esIndexOptimizationConfig(FoxtrotServerConfiguration configuration) {
-        return null == configuration.getEsIndexOptimizationConfig()
-               ? new EsIndexOptimizationConfig()
-               : configuration.getEsIndexOptimizationConfig();
+    public IndexOptimizationConfig indexOptimizationConfig(FoxtrotServerConfiguration configuration) {
+        return null == configuration.getIndexOptimizationConfig()
+               ? new IndexOptimizationConfig()
+               : configuration.getIndexOptimizationConfig();
     }
 
     @Provides
@@ -262,12 +267,6 @@ public class FoxtrotModule extends AbstractModule {
         return serverConfiguration.getAuth();
     }
 
-/*    @Provides
-    @Singleton
-    public GoogleAuthProviderConfig googleAuthProviderConfig(FoxtrotServerConfiguration configuration) {
-        return (GoogleAuthProviderConfig)configuration.getAuth().getProvider();
-    }*/
-
     @Provides
     @Singleton
     public AuthProvider authProvider(
@@ -282,7 +281,11 @@ public class FoxtrotModule extends AbstractModule {
                 break;
             }
             case OAUTH_GOOGLE:
-                authStore = injector.getInstance(ESAuthStore.class);
+                if (configuration.getSearchDatabaseType() == SearchDatabaseType.ELASTICSEARCH) {
+                    authStore = injector.getInstance(ESAuthStore.class);
+                } else {
+                    authStore = injector.getInstance(OpensearchAuthStore.class);
+                }
                 break;
             case OAUTH_IDMAN:
                 authStore = injector.getInstance(IdmanAuthStore.class);
@@ -328,21 +331,44 @@ public class FoxtrotModule extends AbstractModule {
 
     @Provides
     @Singleton
-    public Authorizer<UserPrincipal> authorizer(
-            final Environment environment,
-            final RoleAuthorizer authorizer,
-            final AuthConfig authConfig) {
-        return new CachingAuthorizer<>(environment.metrics(),
-                                       authorizer,
-                                       CacheBuilderSpec.parse(authConfig.getJwt().getAuthCachePolicy()));
+    public Authorizer<UserPrincipal> authorizer(final Environment environment,
+                                                final RoleAuthorizer authorizer,
+                                                final AuthConfig authConfig) {
+        return new CachingAuthorizer<>(environment.metrics(), authorizer, CacheBuilderSpec.parse(authConfig.getJwt()
+                .getAuthCachePolicy()));
     }
 
     @Provides
     @Singleton
-    public ElasticsearchTuningConfig provideElasticsearchTuningConfig(FoxtrotServerConfiguration configuration) {
-        return Objects.nonNull(configuration.getElasticsearchTuningConfig())
-               ? configuration.getElasticsearchTuningConfig()
-               : new ElasticsearchTuningConfig();
+    public SearchDatabaseTuningConfig provideElasticsearchTuningConfig(FoxtrotServerConfiguration configuration) {
+        return Objects.nonNull(configuration.getSearchDatabaseTuningConfig())
+               ? configuration.getSearchDatabaseTuningConfig()
+               : new SearchDatabaseTuningConfig();
+    }
+
+    @Provides
+    @Singleton
+    public ConsolePersistence consolePersistence(FoxtrotServerConfiguration configuration,
+                                                 ObjectMapper objectMapper,
+                                                 ElasticsearchConnection elasticsearchConnection,
+                                                 OpensearchConnection opensearchConnection) {
+        return configuration.getSearchDatabaseType()
+                       .equals(SearchDatabaseType.ELASTICSEARCH)
+               ? new ElasticsearchConsolePersistence(elasticsearchConnection, objectMapper)
+               : new OpensearchConsolePersistence(opensearchConnection, objectMapper);
+    }
+
+    @Provides
+    @Singleton
+    public FqlStoreService fqlStoreService(FoxtrotServerConfiguration configuration,
+                                           ObjectMapper objectMapper,
+                                           ElasticsearchConnection elasticsearchConnection,
+                                           OpensearchConnection opensearchConnection) {
+        bind(FqlStoreService.class).to(FqlStoreElasticsearchServiceImpl.class);
+        return configuration.getSearchDatabaseType()
+                       .equals(SearchDatabaseType.ELASTICSEARCH)
+               ? new FqlStoreElasticsearchServiceImpl(elasticsearchConnection, objectMapper)
+               : new FqlStoreOpensearchServiceImpl(opensearchConnection, objectMapper);
     }
 
 }

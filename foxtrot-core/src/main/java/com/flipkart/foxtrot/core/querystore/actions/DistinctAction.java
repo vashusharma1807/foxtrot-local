@@ -7,7 +7,7 @@ import com.flipkart.foxtrot.common.query.Filter;
 import com.flipkart.foxtrot.common.query.ResultSort;
 import com.flipkart.foxtrot.common.util.CollectionUtils;
 import com.flipkart.foxtrot.core.common.Action;
-import com.flipkart.foxtrot.core.config.ElasticsearchTuningConfig;
+import com.flipkart.foxtrot.core.config.SearchDatabaseTuningConfig;
 import com.flipkart.foxtrot.core.exception.FoxtrotExceptions;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsLoader;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsProvider;
@@ -41,11 +41,11 @@ import static com.flipkart.foxtrot.core.util.ElasticsearchQueryUtils.QUERY_SIZE;
 public class DistinctAction extends Action<DistinctRequest> {
     private static final Logger logger = LoggerFactory.getLogger(DistinctAction.class);
 
-    private final ElasticsearchTuningConfig elasticsearchTuningConfig;
+    private final SearchDatabaseTuningConfig searchDatabaseTuningConfig;
 
     public DistinctAction(DistinctRequest parameter, AnalyticsLoader analyticsLoader) {
         super(parameter, analyticsLoader);
-        this.elasticsearchTuningConfig = analyticsLoader.getElasticsearchTuningConfig();
+        this.searchDatabaseTuningConfig = analyticsLoader.getSearchDatabaseTuningConfig();
     }
 
     @Override
@@ -134,7 +134,7 @@ public class DistinctAction extends Action<DistinctRequest> {
                                     .query(ElasticsearchQueryUtils.translateFilter(request, extraFilters))
                                     .size(QUERY_SIZE)
                                     .aggregation(Utils.buildTermsAggregation(
-                                            request.getNesting(), Sets.newHashSet(), elasticsearchTuningConfig.getAggregationSize()))
+                                            request.getNesting(), Sets.newHashSet(), searchDatabaseTuningConfig.getAggregationSize()))
                                     .timeout(new TimeValue(getGetQueryTimeout(), TimeUnit.MILLISECONDS)));
 
         }

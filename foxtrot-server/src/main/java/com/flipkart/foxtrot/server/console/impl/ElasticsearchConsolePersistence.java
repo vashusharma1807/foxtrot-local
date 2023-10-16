@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.flipkart.foxtrot.server.console;
+package com.flipkart.foxtrot.server.console.impl;
 
 import com.collections.CollectionUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConnection;
 import com.flipkart.foxtrot.core.util.ElasticsearchQueryUtils;
+import com.flipkart.foxtrot.core.util.Utils;
+import com.flipkart.foxtrot.server.console.Console;
+import com.flipkart.foxtrot.server.console.ConsoleFetchException;
+import com.flipkart.foxtrot.server.console.ConsolePersistence;
+import com.flipkart.foxtrot.server.console.ConsolePersistenceException;
+import com.flipkart.foxtrot.server.console.ConsoleV2;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -77,7 +83,7 @@ public class ElasticsearchConsolePersistence implements ConsolePersistence {
         try {
             connection.getClient()
                     .index(new IndexRequest(INDEX, TYPE, console.getId())
-                    .source(ElasticsearchQueryUtils.toMap(mapper, console))
+                    .source(Utils.toMap(mapper, console))
                     .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT);
             logger.info("Saved Console : {}", console);
         } catch (Exception e) {

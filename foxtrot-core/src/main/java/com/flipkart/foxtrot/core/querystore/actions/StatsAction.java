@@ -6,23 +6,23 @@ import com.flipkart.foxtrot.common.query.ResultSort;
 import com.flipkart.foxtrot.common.stats.*;
 import com.flipkart.foxtrot.common.util.CollectionUtils;
 import com.flipkart.foxtrot.core.common.Action;
-import com.flipkart.foxtrot.core.config.ElasticsearchTuningConfig;
+import com.flipkart.foxtrot.core.config.SearchDatabaseTuningConfig;
 import com.flipkart.foxtrot.core.exception.FoxtrotExceptions;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsLoader;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsProvider;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchUtils;
 import com.flipkart.foxtrot.core.util.ElasticsearchQueryUtils;
 import com.google.common.collect.Lists;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
-import org.elasticsearch.search.aggregations.Aggregations;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
+//import org.elasticsearch.action.search.SearchRequest;
+//import org.elasticsearch.action.search.SearchResponse;
+//import org.elasticsearch.client.RequestOptions;
+//import org.elasticsearch.common.unit.TimeValue;
+//import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
+//import org.elasticsearch.search.aggregations.AggregationBuilder;
+//import org.elasticsearch.search.aggregations.Aggregations;
+//import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+//import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
+//import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,11 +39,11 @@ import java.util.stream.Collectors;
 @AnalyticsProvider(opcode = "stats", request = StatsRequest.class, response = StatsResponse.class, cacheable = true)
 public class StatsAction extends Action<StatsRequest> {
 
-    private final ElasticsearchTuningConfig elasticsearchTuningConfig;
+    private final SearchDatabaseTuningConfig searchDatabaseTuningConfig;
 
     public StatsAction(StatsRequest parameter, AnalyticsLoader analyticsLoader) {
         super(parameter, analyticsLoader);
-        this.elasticsearchTuningConfig = analyticsLoader.getElasticsearchTuningConfig();
+        this.searchDatabaseTuningConfig = analyticsLoader.getSearchDatabaseTuningConfig();
     }
 
     private static StatsValue buildStatsValue(String field, Aggregations aggregations) {
@@ -154,7 +154,7 @@ public class StatsAction extends Action<StatsRequest> {
                                                         .map(x -> new ResultSort(x, ResultSort.Order.asc))
                                                         .collect(Collectors.toList()),
                                                 subAggregations,
-                                                elasticsearchTuningConfig.getAggregationSize()));
+                                                searchDatabaseTuningConfig.getAggregationSize()));
         }
         return new SearchRequest(ElasticsearchUtils.getIndices(parameter.getTable(), parameter))
                 .indicesOptions(Utils.indicesOptions())

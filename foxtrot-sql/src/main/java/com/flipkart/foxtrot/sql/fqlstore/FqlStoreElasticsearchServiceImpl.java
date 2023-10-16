@@ -1,9 +1,17 @@
 package com.flipkart.foxtrot.sql.fqlstore;
 
+import static com.flipkart.foxtrot.core.querystore.impl.ElasticsearchUtils.DOCUMENT_TYPE_NAME;
+import static com.flipkart.foxtrot.sql.fqlstore.FqlStore.TITLE_FIELD;
+
 import com.collections.CollectionUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.foxtrot.core.exception.FqlPersistenceException;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConnection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchType;
@@ -16,29 +24,22 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
-import static com.flipkart.foxtrot.core.querystore.impl.ElasticsearchUtils.DOCUMENT_TYPE_NAME;
-import static com.flipkart.foxtrot.sql.fqlstore.FqlStore.TITLE_FIELD;
-
 /***
  Created by mudit.g on Jan, 2019
  ***/
 @Singleton
-public class FqlStoreServiceImpl implements FqlStoreService {
+public class FqlStoreElasticsearchServiceImpl implements FqlStoreService {
+
     public static final String FQL_STORE_INDEX = "fql-store";
 
-    private static final Logger logger = LoggerFactory.getLogger(FqlStore.class);
+    private static final Logger logger = LoggerFactory.getLogger(FqlStoreElasticsearchServiceImpl.class);
 
     private final ElasticsearchConnection elasticsearchConnection;
     private final ObjectMapper objectMapper;
 
     @Inject
-    public FqlStoreServiceImpl(ElasticsearchConnection elasticsearchConnection, ObjectMapper objectMapper) {
+    public FqlStoreElasticsearchServiceImpl(ElasticsearchConnection elasticsearchConnection,
+                                            ObjectMapper objectMapper) {
         this.elasticsearchConnection = elasticsearchConnection;
         this.objectMapper = objectMapper;
     }

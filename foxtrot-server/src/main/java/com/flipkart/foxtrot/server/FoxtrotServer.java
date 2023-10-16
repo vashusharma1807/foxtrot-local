@@ -113,6 +113,7 @@ public class FoxtrotServer extends Application<FoxtrotServerConfiguration> {
 
         MetricUtil.setup(environment.metrics());
         ElasticsearchUtils.setTableNamePrefix(configuration.getElasticsearch());
+        OpensearchUtils.setTableNamePrefix(configuration.getOpensearchConfig());
 
     }
 

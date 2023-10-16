@@ -36,12 +36,6 @@ public class ElasticsearchQueryUtils {
     private ElasticsearchQueryUtils() {
     }
 
-    public static Map<String, Object> toMap(ObjectMapper mapper,
-                                            Object value) {
-        return mapper.convertValue(value, new TypeReference<Map<String, Object>>() {
-        });
-    }
-
     public static QueryBuilder translateFilter(ActionRequest request, List<Filter> extraFilters) {
         val filters = (null == extraFilters || extraFilters.isEmpty())
                 ? request.getFilters()

@@ -27,6 +27,7 @@ import com.flipkart.foxtrot.sql.query.FqlShowTablesQuery;
 import com.flipkart.foxtrot.sql.util.QueryUtils;
 import com.google.common.collect.Lists;
 import io.dropwizard.util.Duration;
+import joptsimple.internal.Strings;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
@@ -36,7 +37,6 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.*;
-import org.elasticsearch.common.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

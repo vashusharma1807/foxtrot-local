@@ -41,7 +41,7 @@ public class CacheHitTest extends ActionTest {
     public static void setUp() throws Exception {
         List<Document> documents = TestUtils.getHistogramDocuments(getMapper());
         getQueryStore().save(TestUtils.TEST_TABLE_NAME, documents);
-        getElasticsearchConnection().getClient()
+        getElasticSearchDatabaseConnection().getClient()
                 .indices()
                 .refresh(new RefreshRequest("*"), RequestOptions.DEFAULT);
         getCacheManager().create("histogram");

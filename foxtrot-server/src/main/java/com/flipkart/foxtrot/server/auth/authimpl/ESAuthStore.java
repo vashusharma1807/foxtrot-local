@@ -1,11 +1,18 @@
-package com.flipkart.foxtrot.server.auth;
+package com.flipkart.foxtrot.server.auth.authimpl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.foxtrot.core.auth.User;
 import com.flipkart.foxtrot.core.querystore.actions.Utils;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConnection;
+import com.flipkart.foxtrot.server.auth.AuthStore;
+import com.flipkart.foxtrot.server.auth.Token;
+import com.flipkart.foxtrot.server.auth.TokenType;
 import com.flipkart.foxtrot.server.auth.authprovider.IdType;
 import io.dropwizard.util.Duration;
+import java.util.Date;
+import java.util.Optional;
+import java.util.function.UnaryOperator;
+import javax.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -24,11 +31,6 @@ import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-
-import javax.inject.Inject;
-import java.util.Date;
-import java.util.Optional;
-import java.util.function.UnaryOperator;
 
 /**
  *

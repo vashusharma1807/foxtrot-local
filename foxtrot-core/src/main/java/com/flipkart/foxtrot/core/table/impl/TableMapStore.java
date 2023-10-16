@@ -21,26 +21,11 @@ import com.flipkart.foxtrot.common.Table;
 import com.flipkart.foxtrot.core.exception.TableMapStoreException;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConnection;
 import com.flipkart.foxtrot.core.util.ElasticsearchQueryUtils;
+import com.flipkart.foxtrot.core.util.Utils;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.hazelcast.map.MapStore;
 import com.hazelcast.map.MapStoreFactory;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.get.*;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchScrollRequest;
-import org.elasticsearch.action.support.WriteRequest;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
@@ -48,7 +33,27 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+//import org.elasticsearch.action.bulk.BulkRequest;
+//import org.elasticsearch.action.delete.DeleteRequest;
+//import org.elasticsearch.action.get.GetRequest;
+//import org.elasticsearch.action.get.GetResponse;
+//import org.elasticsearch.action.get.MultiGetItemResponse;
+//import org.elasticsearch.action.get.MultiGetRequest;
+//import org.elasticsearch.action.get.MultiGetResponse;
+//import org.elasticsearch.action.index.IndexRequest;
+//import org.elasticsearch.action.search.SearchRequest;
+//import org.elasticsearch.action.search.SearchResponse;
+//import org.elasticsearch.action.search.SearchScrollRequest;
+//import org.elasticsearch.action.support.WriteRequest;
+//import org.elasticsearch.client.RequestOptions;
+//import org.elasticsearch.common.unit.TimeValue;
+//import org.elasticsearch.index.query.QueryBuilders;
+//import org.elasticsearch.search.SearchHit;
+//import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+//TODO
 public class TableMapStore implements MapStore<String, Table>, Serializable {
     public static final String TABLE_META_INDEX = "table-meta";
     public static final String TABLE_META_TYPE = "table-meta";
@@ -74,7 +79,7 @@ public class TableMapStore implements MapStore<String, Table>, Serializable {
         }
         logger.info("Storing key: {}", key);
         try {
-            Map<String, Object> sourceMap = ElasticsearchQueryUtils.toMap(objectMapper, value);
+            Map<String, Object> sourceMap = Utils.toMap(objectMapper, value);
             elasticsearchConnection.getClient()
                     .index(new IndexRequest()
                             .index(TABLE_META_INDEX)
@@ -105,7 +110,7 @@ public class TableMapStore implements MapStore<String, Table>, Serializable {
                     throw new TableMapStoreException(
                             String.format("Illegal Store Request - Object is Null for Table - %s", mapEntry.getKey()));
                 }
-                Map<String, Object> sourceMap = ElasticsearchQueryUtils.toMap(objectMapper, mapEntry.getValue());
+                Map<String, Object> sourceMap = Utils.toMap(objectMapper, mapEntry.getValue());
                 bulkRequestBuilder.add(new IndexRequest(TABLE_META_INDEX, TABLE_META_TYPE, mapEntry.getKey())
                                                .source(sourceMap));
             } catch (Exception e) {

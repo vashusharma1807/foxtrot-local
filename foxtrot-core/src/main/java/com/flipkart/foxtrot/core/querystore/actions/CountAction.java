@@ -8,7 +8,7 @@ import com.flipkart.foxtrot.common.query.general.ExistsFilter;
 import com.flipkart.foxtrot.common.util.CollectionUtils;
 import com.flipkart.foxtrot.common.visitor.CountPrecisionThresholdVisitorAdapter;
 import com.flipkart.foxtrot.core.common.Action;
-import com.flipkart.foxtrot.core.config.ElasticsearchTuningConfig;
+import com.flipkart.foxtrot.core.config.SearchDatabaseTuningConfig;
 import com.flipkart.foxtrot.core.exception.FoxtrotExceptions;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsLoader;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsProvider;
@@ -31,15 +31,15 @@ import static com.flipkart.foxtrot.core.util.ElasticsearchQueryUtils.QUERY_SIZE;
 /**
  * Created by rishabh.goyal on 02/11/14.
  */
-
+//TODO - Whole Querystore
 @AnalyticsProvider(opcode = "count", request = CountRequest.class, response = CountResponse.class, cacheable = true)
 public class CountAction extends Action<CountRequest> {
 
-    private final ElasticsearchTuningConfig elasticsearchTuningConfig;
+    private final SearchDatabaseTuningConfig searchDatabaseTuningConfig;
 
     public CountAction(CountRequest parameter, AnalyticsLoader analyticsLoader) {
         super(parameter, analyticsLoader);
-        this.elasticsearchTuningConfig = analyticsLoader.getElasticsearchTuningConfig();
+        this.searchDatabaseTuningConfig = analyticsLoader.getSearchDatabaseTuningConfig();
     }
 
 
@@ -123,7 +123,7 @@ public class CountAction extends Action<CountRequest> {
                                     .query(ElasticsearchQueryUtils.translateFilter(parameter, extraFilters))
                                     .aggregation(Utils.buildCardinalityAggregation(parameter.getField(),
                                                                           parameter.accept(new CountPrecisionThresholdVisitorAdapter(
-                                                                                  elasticsearchTuningConfig.getPrecisionThreshold())))))
+                                                                                  searchDatabaseTuningConfig.getPrecisionThreshold())))))
                                 ;
             }
             catch (Exception e) {

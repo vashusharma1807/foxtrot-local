@@ -15,6 +15,9 @@
  */
 package com.flipkart.foxtrot.core;
 
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import com.flipkart.foxtrot.common.Document;
@@ -35,6 +38,15 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.Vector;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.SneakyThrows;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.indices.CreateIndexRequest;
@@ -47,13 +59,6 @@ import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
 
 /**
  * Created by rishabh.goyal on 28/04/14.

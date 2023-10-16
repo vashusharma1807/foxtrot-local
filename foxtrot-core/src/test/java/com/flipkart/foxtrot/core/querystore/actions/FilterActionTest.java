@@ -57,7 +57,7 @@ public class FilterActionTest extends ActionTest {
     public static void setUp() throws Exception {
         List<Document> documents = TestUtils.getQueryDocuments(getMapper());
         getQueryStore().save(TestUtils.TEST_TABLE_NAME, documents);
-        getElasticsearchConnection().getClient()
+        getElasticSearchDatabaseConnection().getClient()
                 .indices()
                 .refresh(new RefreshRequest("*"), RequestOptions.DEFAULT);
     }
@@ -69,7 +69,7 @@ public class FilterActionTest extends ActionTest {
         resultSort.setOrder(ResultSort.Order.asc);
         resultSort.setField("_timestamp");
         query.setSort(resultSort);
-        when(getElasticsearchConnection().getClient()).thenReturn(null);
+        when(getElasticSearchDatabaseConnection().getClient()).thenReturn(null);
         getQueryExecutor().execute(query);
     }
 
@@ -767,12 +767,12 @@ public class FilterActionTest extends ActionTest {
         documents.addAll(TestUtils.getQueryDocumentsDifferentDate(mapper, new Date(2014 - 1900, 4, 5).getTime()));
         getQueryStore().save(TestUtils.TEST_TABLE_NAME, documents);
         for(Document document : documents) {
-            getElasticsearchConnection().getClient()
+            getElasticSearchDatabaseConnection().getClient()
                     .indices()
                     .refresh(new RefreshRequest(ElasticsearchUtils.getCurrentIndex(TestUtils.TEST_TABLE_NAME, document.getTimestamp())),
                              RequestOptions.DEFAULT);
         }
-        GetIndexResponse response = getElasticsearchConnection().getClient()
+        GetIndexResponse response = getElasticSearchDatabaseConnection().getClient()
                 .indices()
                 .get(new GetIndexRequest("*"), RequestOptions.DEFAULT);
         // Find all indices returned for this table name.. (using regex to match)

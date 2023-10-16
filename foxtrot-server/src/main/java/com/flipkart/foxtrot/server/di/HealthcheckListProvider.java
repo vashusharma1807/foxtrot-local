@@ -3,6 +3,7 @@ package com.flipkart.foxtrot.server.di;
 import com.codahale.metrics.health.HealthCheck;
 import com.flipkart.foxtrot.server.healthcheck.HBaseHealthCheck;
 import com.flipkart.foxtrot.server.healthcheck.HazelcastHealthCheck;
+import com.flipkart.foxtrot.server.healthcheck.SearchDatabaseHealthCheck;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import java.util.Arrays;
@@ -16,8 +17,12 @@ public class HealthcheckListProvider implements Provider<List<HealthCheck>> {
     @Inject
     private Provider<HazelcastHealthCheck> hazelcastHealthCheckProvider;
 
+    @Inject
+    private Provider<SearchDatabaseHealthCheck> searchDatabaseHealthCheckProvider;
+
 
     public List<HealthCheck> get() {
-        return Arrays.asList(hBaseHealthCheckProvider.get(), hazelcastHealthCheckProvider.get());
+        return Arrays.asList(hBaseHealthCheckProvider.get(), hazelcastHealthCheckProvider.get(),
+                searchDatabaseHealthCheckProvider.get());
     }
 }

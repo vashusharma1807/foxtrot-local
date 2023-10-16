@@ -23,7 +23,7 @@ import com.flipkart.foxtrot.common.query.datetime.LastFilter;
 import com.flipkart.foxtrot.common.util.CollectionUtils;
 import com.flipkart.foxtrot.common.visitor.CountPrecisionThresholdVisitorAdapter;
 import com.flipkart.foxtrot.core.common.Action;
-import com.flipkart.foxtrot.core.config.ElasticsearchTuningConfig;
+import com.flipkart.foxtrot.core.config.SearchDatabaseTuningConfig;
 import com.flipkart.foxtrot.core.exception.FoxtrotExceptions;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsLoader;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsProvider;
@@ -59,11 +59,11 @@ import static com.flipkart.foxtrot.core.util.ElasticsearchQueryUtils.QUERY_SIZE;
 @AnalyticsProvider(opcode = "histogram", request = HistogramRequest.class, response = HistogramResponse.class, cacheable = true)
 public class HistogramAction extends Action<HistogramRequest> {
 
-    private final ElasticsearchTuningConfig elasticsearchTuningConfig;
+    private final SearchDatabaseTuningConfig searchDatabaseTuningConfig;
 
     public HistogramAction(HistogramRequest parameter, AnalyticsLoader analyticsLoader) {
         super(parameter, analyticsLoader);
-        this.elasticsearchTuningConfig = analyticsLoader.getElasticsearchTuningConfig();
+        this.searchDatabaseTuningConfig = analyticsLoader.getSearchDatabaseTuningConfig();
     }
 
     @Override
@@ -182,7 +182,7 @@ public class HistogramAction extends Action<HistogramRequest> {
         if (!CollectionUtils.isNullOrEmpty(getParameter().getUniqueCountOn())) {
             histogramBuilder.subAggregation(Utils.buildCardinalityAggregation(
                     getParameter().getUniqueCountOn(), parameter.accept(new CountPrecisionThresholdVisitorAdapter(
-                            elasticsearchTuningConfig.getPrecisionThreshold()))));
+                            searchDatabaseTuningConfig.getPrecisionThreshold()))));
         }
         return histogramBuilder;
     }

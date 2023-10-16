@@ -12,7 +12,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FoxtrotIndicesStatsResponse {
+public class ElasticsearchIndicesStatsResponse {
 
     private IndicesStatsResponse indicesStatsResponse;
     private Map<String, Integer> tableColumnCount;

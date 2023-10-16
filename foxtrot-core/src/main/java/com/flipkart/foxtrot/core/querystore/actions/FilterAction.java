@@ -22,7 +22,7 @@ import com.flipkart.foxtrot.common.query.QueryResponse;
 import com.flipkart.foxtrot.common.query.ResultSort;
 import com.flipkart.foxtrot.common.util.CollectionUtils;
 import com.flipkart.foxtrot.core.common.Action;
-import com.flipkart.foxtrot.core.config.ElasticsearchTuningConfig;
+import com.flipkart.foxtrot.core.config.SearchDatabaseTuningConfig;
 import com.flipkart.foxtrot.core.exception.FoxtrotExceptions;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsLoader;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsProvider;
@@ -56,11 +56,11 @@ import java.util.concurrent.TimeUnit;
 @AnalyticsProvider(opcode = "query", request = Query.class, response = QueryResponse.class, cacheable = false)
 public class FilterAction extends Action<Query> {
     private static final Logger logger = LoggerFactory.getLogger(FilterAction.class);
-    private ElasticsearchTuningConfig elasticsearchTuningConfig;
+    private SearchDatabaseTuningConfig searchDatabaseTuningConfig;
 
     public FilterAction(Query parameter, AnalyticsLoader analyticsLoader) {
         super(parameter, analyticsLoader);
-        this.elasticsearchTuningConfig = analyticsLoader.getElasticsearchTuningConfig();
+        this.searchDatabaseTuningConfig = analyticsLoader.getSearchDatabaseTuningConfig();
     }
 
     @Override
@@ -112,9 +112,9 @@ public class FilterAction extends Action<Query> {
             validationErrors.add("limit must be positive integer");
         }
 
-        if (parameter.getLimit() > elasticsearchTuningConfig.getDocumentsLimitAllowed()){
+        if (parameter.getLimit() > searchDatabaseTuningConfig.getDocumentsLimitAllowed()){
             validationErrors.add(String.format("Limit more than %s is not supported",
-                                               elasticsearchTuningConfig.getDocumentsLimitAllowed()));
+                                               searchDatabaseTuningConfig.getDocumentsLimitAllowed()));
         }
 
         if(!CollectionUtils.isNullOrEmpty(validationErrors)) {
@@ -163,7 +163,7 @@ public class FilterAction extends Action<Query> {
 
     private SearchRequest getScrollRequestBuilder(Query parameter, List<Filter> extraFilters) {
         SearchRequest searchRequest = getSearchRequest(parameter, extraFilters);
-        searchRequest.scroll(TimeValue.timeValueSeconds(elasticsearchTuningConfig.getScrollTimeInSeconds()));
+        searchRequest.scroll(TimeValue.timeValueSeconds(searchDatabaseTuningConfig.getScrollTimeInSeconds()));
         return searchRequest;
     }
 
@@ -189,7 +189,7 @@ public class FilterAction extends Action<Query> {
             if (StringUtils.isNotEmpty(parameter.getScrollId())) {
                 scrollId = parameter.getScrollId();
                 SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
-                scrollRequest.scroll(TimeValue.timeValueSeconds(elasticsearchTuningConfig.getScrollTimeInSeconds()));
+                scrollRequest.scroll(TimeValue.timeValueSeconds(searchDatabaseTuningConfig.getScrollTimeInSeconds()));
                 SearchResponse searchScrollResponse = getConnection().getClient().scroll(scrollRequest,
                                                                                          RequestOptions.DEFAULT);
                 scrollId = searchScrollResponse.getScrollId();

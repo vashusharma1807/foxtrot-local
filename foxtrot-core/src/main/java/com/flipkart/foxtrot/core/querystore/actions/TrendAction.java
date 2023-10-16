@@ -26,7 +26,7 @@ import com.flipkart.foxtrot.common.trend.TrendResponse;
 import com.flipkart.foxtrot.common.util.CollectionUtils;
 import com.flipkart.foxtrot.common.visitor.CountPrecisionThresholdVisitorAdapter;
 import com.flipkart.foxtrot.core.common.Action;
-import com.flipkart.foxtrot.core.config.ElasticsearchTuningConfig;
+import com.flipkart.foxtrot.core.config.SearchDatabaseTuningConfig;
 import com.flipkart.foxtrot.core.exception.FoxtrotExceptions;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsLoader;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsProvider;
@@ -66,11 +66,11 @@ import static com.flipkart.foxtrot.core.util.ElasticsearchQueryUtils.QUERY_SIZE;
 @AnalyticsProvider(opcode = "trend", request = TrendRequest.class, response = TrendResponse.class, cacheable = true)
 public class TrendAction extends Action<TrendRequest> {
 
-    private final ElasticsearchTuningConfig elasticsearchTuningConfig;
+    private final SearchDatabaseTuningConfig searchDatabaseTuningConfig;
 
     public TrendAction(TrendRequest parameter, AnalyticsLoader analyticsLoader) {
         super(parameter, analyticsLoader);
-        this.elasticsearchTuningConfig = analyticsLoader.getElasticsearchTuningConfig();
+        this.searchDatabaseTuningConfig = analyticsLoader.getSearchDatabaseTuningConfig();
     }
 
     @Override
@@ -201,10 +201,10 @@ public class TrendAction extends Action<TrendRequest> {
         if(!CollectionUtils.isNullOrEmpty(getParameter().getUniqueCountOn())) {
             histogramBuilder.subAggregation(Utils.buildCardinalityAggregation(
                     getParameter().getUniqueCountOn(), request.accept(new CountPrecisionThresholdVisitorAdapter(
-                            elasticsearchTuningConfig.getPrecisionThreshold()))));
+                            searchDatabaseTuningConfig.getPrecisionThreshold()))));
         }
         return Utils.buildTermsAggregation(Lists.newArrayList(new ResultSort(field, ResultSort.Order.asc)),
-                Sets.newHashSet(histogramBuilder), elasticsearchTuningConfig.getAggregationSize());
+                Sets.newHashSet(histogramBuilder), searchDatabaseTuningConfig.getAggregationSize());
     }
 
     private TrendResponse buildResponse(TrendRequest request, Aggregations aggregations) {

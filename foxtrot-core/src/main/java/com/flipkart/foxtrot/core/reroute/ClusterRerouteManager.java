@@ -1,26 +1,10 @@
 package com.flipkart.foxtrot.core.reroute;
 
-import com.flipkart.foxtrot.common.Date;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConnection;
-import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchUtils;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.Lists;
-import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.action.admin.cluster.node.info.NodesInfoRequest;
-import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
-import org.elasticsearch.action.admin.cluster.reroute.ClusterRerouteRequest;
-import org.elasticsearch.action.admin.cluster.reroute.ClusterRerouteResponse;
-import org.elasticsearch.action.admin.indices.stats.IndicesStatsRequest;
-import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
-import org.elasticsearch.cluster.routing.allocation.command.MoveAllocationCommand;
-import org.elasticsearch.index.shard.ShardId;
-import org.joda.time.DateTime;
-import ru.vyarus.dropwizard.guice.module.installer.order.Order;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.*;
+import lombok.extern.slf4j.Slf4j;
+import ru.vyarus.dropwizard.guice.module.installer.order.Order;
 
 /***
  Created by mudit.g on Sep, 2019

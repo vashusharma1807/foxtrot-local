@@ -19,7 +19,7 @@ package impl;/**
  ***/
 
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConfig;
-import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConnection;
+import com.flipkart.foxtrot.core.querystore.impl.ElasticSearchDatabaseConnection;
 import org.elasticsearch.client.Client;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,7 +50,7 @@ public class ESFieldMetadataStoreTest {
         config.setHosts("localhost");
         config.setTableNamePrefix("foxtrot");
 
-        ElasticsearchConnection connection = new ElasticsearchConnection(config);
+        ElasticSearchDatabaseConnection connection = new ElasticSearchDatabaseConnection(config);
         connection.start();
         //CachedFieldMetadataStore fieldMetadataStore
         //= new CachedFieldMetadataStore(new ESFieldMetadataStore(mapper, connection));

@@ -28,6 +28,7 @@ import com.flipkart.foxtrot.core.querystore.mutator.IndexerEventMutator;
 import com.flipkart.foxtrot.core.table.TableMetadataManager;
 import com.flipkart.foxtrot.core.util.ElasticsearchQueryUtils;
 import com.flipkart.foxtrot.core.util.MetricUtil;
+import com.flipkart.foxtrot.core.util.Utils;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -409,7 +410,7 @@ public class ElasticsearchQueryStore implements QueryStore {
         dataNode.set(ElasticsearchUtils.DOCUMENT_META_FIELD_NAME, metaNode);
         dataNode.set(ElasticsearchUtils.DOCUMENT_TIME_FIELD_NAME, mapper.valueToTree(document.getDate()));
         mutators.forEach(mutator-> mutator.mutate(table, document.getId(), dataNode));
-        return ElasticsearchQueryUtils.toMap(mapper, dataNode);
+        return Utils.toMap(mapper, dataNode);
     }
 
     private void deleteIndices(List<String> indicesToDelete) {

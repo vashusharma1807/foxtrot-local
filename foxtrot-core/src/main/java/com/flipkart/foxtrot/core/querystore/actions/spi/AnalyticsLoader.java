@@ -20,12 +20,12 @@ import com.fasterxml.jackson.databind.jsontype.NamedType;
 import com.flipkart.foxtrot.common.ActionRequest;
 import com.flipkart.foxtrot.core.cache.CacheManager;
 import com.flipkart.foxtrot.core.common.Action;
-import com.flipkart.foxtrot.core.config.ElasticsearchTuningConfig;
+import com.flipkart.foxtrot.core.config.SearchDatabaseTuningConfig;
 import com.flipkart.foxtrot.core.datastore.DataStore;
 import com.flipkart.foxtrot.core.exception.AnalyticsActionLoaderException;
 import com.flipkart.foxtrot.core.exception.FoxtrotExceptions;
 import com.flipkart.foxtrot.core.querystore.QueryStore;
-import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConnection;
+import com.flipkart.foxtrot.core.querystore.SearchDatabaseConnection;
 import com.flipkart.foxtrot.core.table.TableMetadataManager;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
@@ -62,23 +62,23 @@ public class AnalyticsLoader implements Managed {
     private final TableMetadataManager tableMetadataManager;
     private final DataStore dataStore;
     private final QueryStore queryStore;
-    private final ElasticsearchConnection elasticsearchConnection;
-    private final ElasticsearchTuningConfig elasticsearchTuningConfig;
+    private final SearchDatabaseConnection SearchDatabaseConnection;
+    private final SearchDatabaseTuningConfig searchDatabaseTuningConfig;
     private final CacheManager cacheManager;
     private final ObjectMapper objectMapper;
 
     @Inject
     public AnalyticsLoader(
             TableMetadataManager tableMetadataManager, DataStore dataStore, QueryStore queryStore,
-            ElasticsearchConnection elasticsearchConnection, CacheManager cacheManager,
-            ObjectMapper objectMapper, ElasticsearchTuningConfig elasticsearchTuningConfig) {
+            SearchDatabaseConnection SearchDatabaseConnection, CacheManager cacheManager,
+            ObjectMapper objectMapper, SearchDatabaseTuningConfig searchDatabaseTuningConfig) {
         this.tableMetadataManager = tableMetadataManager;
         this.dataStore = dataStore;
         this.queryStore = queryStore;
-        this.elasticsearchConnection = elasticsearchConnection;
+        this.SearchDatabaseConnection = SearchDatabaseConnection;
         this.cacheManager = cacheManager;
         this.objectMapper = objectMapper;
-        this.elasticsearchTuningConfig = elasticsearchTuningConfig;
+        this.searchDatabaseTuningConfig = searchDatabaseTuningConfig;
     }
 
     @SuppressWarnings("unchecked")

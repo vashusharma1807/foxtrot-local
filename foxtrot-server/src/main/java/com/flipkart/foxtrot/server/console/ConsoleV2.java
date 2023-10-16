@@ -16,6 +16,7 @@
 package com.flipkart.foxtrot.server.console;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.io.Serializable;
 import lombok.Data;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.hibernate.validator.constraints.NotEmpty;
@@ -25,7 +26,7 @@ import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Data
-public class ConsoleV2 {
+public class ConsoleV2 implements Serializable {
 
     @NotNull
     @NotEmpty

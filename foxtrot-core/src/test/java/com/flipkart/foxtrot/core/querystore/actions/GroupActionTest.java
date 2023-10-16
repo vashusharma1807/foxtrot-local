@@ -48,7 +48,7 @@ public class GroupActionTest extends ActionTest {
     public static void setUp() throws Exception {
         List<Document> documents = TestUtils.getGroupDocuments(getMapper());
         getQueryStore().save(TestUtils.TEST_TABLE_NAME, documents);
-        getElasticsearchConnection().getClient()
+        getElasticSearchDatabaseConnection().getClient()
                 .indices()
                 .refresh(new RefreshRequest("*"), RequestOptions.DEFAULT);
         getTableMetadataManager().getFieldMappings(TestUtils.TEST_TABLE_NAME, true, true);
@@ -63,7 +63,7 @@ public class GroupActionTest extends ActionTest {
         GroupRequest groupRequest = new GroupRequest();
         groupRequest.setTable(TestUtils.TEST_TABLE_NAME);
         groupRequest.setNesting(Collections.singletonList("os"));
-        doReturn(null).when(getElasticsearchConnection())
+        doReturn(null).when(getElasticSearchDatabaseConnection())
                 .getClient();
         try {
             getQueryExecutor().execute(groupRequest);

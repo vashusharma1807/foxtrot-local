@@ -44,7 +44,7 @@ public class StatsActionTest extends ActionTest {
     public static void setUp() throws Exception {
         List<Document> documents = TestUtils.getStatsDocuments(getMapper());
         getQueryStore().save(TestUtils.TEST_TABLE_NAME, documents);
-        getElasticsearchConnection().getClient()
+        getElasticSearchDatabaseConnection().getClient()
                 .indices()
                 .refresh(new RefreshRequest("*"), RequestOptions.DEFAULT);
     }

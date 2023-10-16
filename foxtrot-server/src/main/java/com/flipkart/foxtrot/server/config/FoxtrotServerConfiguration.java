@@ -18,15 +18,17 @@ package com.flipkart.foxtrot.server.config;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.flipkart.foxtrot.core.cardinality.CardinalityConfig;
 import com.flipkart.foxtrot.core.common.DataDeletionManagerConfig;
-import com.flipkart.foxtrot.core.config.ElasticsearchTuningConfig;
+import com.flipkart.foxtrot.core.config.SearchDatabaseTuningConfig;
 import com.flipkart.foxtrot.core.config.TextNodeRemoverConfiguration;
 import com.flipkart.foxtrot.core.datastore.impl.hbase.HbaseConfig;
 import com.flipkart.foxtrot.core.email.EmailConfig;
-import com.flipkart.foxtrot.core.jobs.optimization.EsIndexOptimizationConfig;
+import com.flipkart.foxtrot.core.jobs.optimization.IndexOptimizationConfig;
 import com.flipkart.foxtrot.core.querystore.impl.CacheConfig;
 import com.flipkart.foxtrot.core.querystore.impl.ClusterConfig;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConfig;
+import com.flipkart.foxtrot.core.querystore.impl.OpensearchConfig;
 import com.flipkart.foxtrot.core.reroute.ClusterRerouteConfig;
+import com.flipkart.foxtrot.server.SearchDatabaseType;
 import com.flipkart.foxtrot.server.auth.AuthConfig;
 import com.flipkart.foxtrot.server.jobs.consolehistory.ConsoleHistoryConfig;
 import com.flipkart.foxtrot.server.jobs.sessioncleanup.SessionCleanupConfig;
@@ -56,6 +58,9 @@ public class FoxtrotServerConfiguration extends Configuration {
     private final ElasticsearchConfig elasticsearch;
 
     @Valid
+    private final OpensearchConfig opensearchConfig;
+
+    @Valid
     private final ClusterConfig cluster;
     @Valid
     @JsonProperty("deletionconfig")
@@ -64,7 +69,7 @@ public class FoxtrotServerConfiguration extends Configuration {
     @Valid
     private CardinalityConfig cardinality;
     @Valid
-    private EsIndexOptimizationConfig esIndexOptimizationConfig;
+    private IndexOptimizationConfig indexOptimizationConfig;
 
     @Valid
     private SessionCleanupConfig sessionCleanupConfig;
@@ -86,7 +91,7 @@ public class FoxtrotServerConfiguration extends Configuration {
     private boolean restrictAccess;
 
     @Valid
-    private ElasticsearchTuningConfig elasticsearchTuningConfig;
+    private SearchDatabaseTuningConfig searchDatabaseTuningConfig;
 
     @Valid
     private String swaggerHost;
@@ -100,11 +105,14 @@ public class FoxtrotServerConfiguration extends Configuration {
 
     private ClusterRerouteConfig clusterRerouteConfig;
 
+    private SearchDatabaseType searchDatabaseType;
+
     @Valid
     @NotNull
     private AuthConfig auth = new AuthConfig();
 
     public FoxtrotServerConfiguration() {
+        opensearchConfig = new OpensearchConfig();
         this.hbase = new HbaseConfig();
         this.elasticsearch = new ElasticsearchConfig();
         this.cluster = new ClusterConfig();

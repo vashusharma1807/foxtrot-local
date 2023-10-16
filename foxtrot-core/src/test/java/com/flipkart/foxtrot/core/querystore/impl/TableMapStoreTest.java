@@ -15,25 +15,41 @@
  */
 package com.flipkart.foxtrot.core.querystore.impl;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.foxtrot.common.Table;
 import com.flipkart.foxtrot.core.TestUtils;
 import com.flipkart.foxtrot.core.table.impl.ElasticsearchTestUtils;
 import com.flipkart.foxtrot.core.table.impl.TableMapStore;
-import com.flipkart.foxtrot.core.util.ElasticsearchQueryUtils;
+import com.flipkart.foxtrot.core.util.Utils;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.action.get.*;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.get.MultiGetItemResponse;
+import org.elasticsearch.action.get.MultiGetRequest;
+import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.RequestOptions;
-import org.junit.*;
-
-import java.util.*;
-
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 
 /**
@@ -298,7 +314,7 @@ public class TableMapStoreTest {
         Table table = new Table();
         table.setName(TEST_TABLE);
         table.setTtl(30);
-        Map<String, Object> sourceMap = ElasticsearchQueryUtils.toMap(mapper, table);
+        Map<String, Object> sourceMap = Utils.toMap(mapper, table);
         elasticsearchConnection.getClient()
                 .index(new IndexRequest(TABLE_META_INDEX)
                         .type(TABLE_META_TYPE)
@@ -345,7 +361,7 @@ public class TableMapStoreTest {
                                   .toString());
             table.setTtl(20);
             tables.put(table.getName(), table);
-            Map<String, Object> sourceMap = ElasticsearchQueryUtils.toMap(mapper, table);
+            Map<String, Object> sourceMap = Utils.toMap(mapper, table);
             elasticsearchConnection.getClient()
                     .index(new IndexRequest(TABLE_META_INDEX)
                                    .type(TABLE_META_TYPE)
@@ -389,7 +405,7 @@ public class TableMapStoreTest {
                                   .toString());
             table.setTtl(20);
             tables.put(table.getName(), table);
-            Map<String, Object> sourceMap = ElasticsearchQueryUtils.toMap(mapper, table);
+            Map<String, Object> sourceMap = Utils.toMap(mapper, table);
             elasticsearchConnection.getClient()
                     .index(new IndexRequest(TABLE_META_INDEX)
                                    .type(TABLE_META_TYPE)

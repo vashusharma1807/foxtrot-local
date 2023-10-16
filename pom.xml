@@ -329,7 +329,7 @@
                         <ignoreTrivial>true</ignoreTrivial>
                         <excludes>
                             <exclude>com/flipkart/foxtrot/core/querystore/impl/HazelcastConnection.java</exclude>
-                            <exclude>com/flipkart/foxtrot/core/querystore/impl/ElasticsearchConnection.java</exclude>
+                            <exclude>com/flipkart/foxtrot/core/querystore/impl/ElasticSearchDatabaseConnection.java</exclude>
                             <exclude>com/flipkart/foxtrot/core/datastore/impl/hbase/HbaseTableConnection.java</exclude>
                             <exclude>com/flipkart/foxtrot/server/FoxtrotServer.java</exclude>
                             <exclude>com/flipkart/foxtrot/server/config/FoxtrotServerConfiguration.java</exclude>

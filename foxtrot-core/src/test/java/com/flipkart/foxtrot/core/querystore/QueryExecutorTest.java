@@ -22,12 +22,13 @@ import com.flipkart.foxtrot.core.cache.impl.DistributedCacheFactory;
 import com.flipkart.foxtrot.core.common.RequestWithNoAction;
 import com.flipkart.foxtrot.core.common.noncacheable.NonCacheableAction;
 import com.flipkart.foxtrot.core.common.noncacheable.NonCacheableActionRequest;
-import com.flipkart.foxtrot.core.config.ElasticsearchTuningConfig;
+import com.flipkart.foxtrot.core.config.SearchDatabaseTuningConfig;
 import com.flipkart.foxtrot.core.datastore.DataStore;
 import com.flipkart.foxtrot.core.exception.ErrorCode;
 import com.flipkart.foxtrot.core.exception.FoxtrotException;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsLoader;
 import com.flipkart.foxtrot.core.querystore.impl.CacheConfig;
+import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConnection;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConnection;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchUtils;
 import com.flipkart.foxtrot.core.querystore.impl.HazelcastConnection;
@@ -85,7 +86,7 @@ public class QueryExecutorTest {
         QueryStore queryStore = mock(QueryStore.class);
         analyticsLoader = spy(
                 new AnalyticsLoader(tableMetadataManager, dataStore, queryStore, elasticsearchConnection, cacheManager,
-                        mapper, new ElasticsearchTuningConfig()));
+                        mapper, new SearchDatabaseTuningConfig()));
         TestUtils.registerActions(analyticsLoader, mapper);
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         queryExecutor = new QueryExecutor(analyticsLoader, executorService, Collections.emptyList());

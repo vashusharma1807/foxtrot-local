@@ -5,9 +5,14 @@ import com.flipkart.foxtrot.core.auth.FoxtrotRole;
 import com.flipkart.foxtrot.core.auth.User;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConnection;
 import com.flipkart.foxtrot.core.table.impl.ElasticsearchTestUtils;
+import com.flipkart.foxtrot.server.auth.authimpl.ESAuthStore;
 import com.google.common.collect.Sets;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.util.Duration;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.Objects;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.junit.After;
@@ -15,30 +20,25 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.EnumSet;
-import java.util.Objects;
-
 /**
  *
  */
 public class ESAuthStoreTest {
 
     private AuthStore authStore;
-    private ElasticsearchConnection elasticsearchConnection;
+    private ElasticsearchConnection elasticSearchDatabaseConnection;
 
     @Before
     public void setup() throws Exception {
-        elasticsearchConnection = ElasticsearchTestUtils.getConnection();
-        TestUtils.ensureIndex(elasticsearchConnection, ESAuthStore.USERS_INDEX);
-        TestUtils.ensureIndex(elasticsearchConnection, ESAuthStore.TOKENS_INDEX);
-        authStore = new ESAuthStore(elasticsearchConnection, Jackson.newObjectMapper());
+        elasticSearchDatabaseConnection = ElasticsearchTestUtils.getConnection();
+        TestUtils.ensureIndex(elasticSearchDatabaseConnection, ESAuthStore.USERS_INDEX);
+        TestUtils.ensureIndex(elasticSearchDatabaseConnection, ESAuthStore.TOKENS_INDEX);
+        authStore = new ESAuthStore(elasticSearchDatabaseConnection, Jackson.newObjectMapper());
     }
 
     @After
     public void teardown() {
-        ElasticsearchTestUtils.cleanupIndices(elasticsearchConnection);
+        ElasticsearchTestUtils.cleanupIndices(elasticSearchDatabaseConnection);
     }
 
     @Test

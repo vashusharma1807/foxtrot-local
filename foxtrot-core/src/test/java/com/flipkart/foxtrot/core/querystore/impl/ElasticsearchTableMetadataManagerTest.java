@@ -15,6 +15,13 @@
  */
 package com.flipkart.foxtrot.core.querystore.impl;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.foxtrot.common.Document;
 import com.flipkart.foxtrot.common.FieldType;
@@ -35,21 +42,20 @@ import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.test.TestHazelcastInstanceFactory;
-import org.joda.time.DateTime;
-import org.junit.*;
-import org.mockito.Mockito;
-
 import java.util.List;
-
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
+import org.joda.time.DateTime;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.mockito.Mockito;
 
 
 /**
  * Created by rishabh.goyal on 29/04/14.
  */
-public class DistributedTableMetadataManagerTest {
+public class ElasticsearchTableMetadataManagerTest {
 
     private static HazelcastInstance hazelcastInstance;
     private static ElasticsearchConnection elasticsearchConnection;
@@ -88,17 +94,16 @@ public class DistributedTableMetadataManagerTest {
         when(hazelcastConnection.getHazelcastConfig()).thenReturn(new Config());
         hazelcastConnection.start();
 
-        this.distributedTableMetadataManager = new DistributedTableMetadataManager(hazelcastConnection, elasticsearchConnection,
-                objectMapper, new CardinalityConfig()
-        );
+        this.distributedTableMetadataManager = new DistributedTableMetadataManager(hazelcastConnection,
+                elasticsearchConnection, objectMapper, new CardinalityConfig());
         distributedTableMetadataManager.start();
 
         tableDataStore = hazelcastInstance.getMap("tablemetadatamap");
         List<IndexerEventMutator> mutators = Lists.newArrayList(new LargeTextNodeRemover(objectMapper,
-                TextNodeRemoverConfiguration.builder().build()));
-        this.queryStore = new ElasticsearchQueryStore(distributedTableMetadataManager, elasticsearchConnection, dataStore, mutators, objectMapper,
-                new CardinalityConfig()
-        );
+                TextNodeRemoverConfiguration.builder()
+                        .build()));
+        this.queryStore = new ElasticsearchQueryStore(distributedTableMetadataManager, elasticsearchConnection,
+                dataStore, mutators, objectMapper, new CardinalityConfig());
     }
 
     @After

@@ -28,18 +28,16 @@ import com.flipkart.foxtrot.core.cache.CacheManager;
 import com.flipkart.foxtrot.core.exception.FoxtrotExceptions;
 import com.flipkart.foxtrot.core.exception.MalformedQueryException;
 import com.flipkart.foxtrot.core.querystore.QueryStore;
+import com.flipkart.foxtrot.core.querystore.SearchDatabaseConnection;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsLoader;
-import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConfig;
-import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConnection;
 import com.flipkart.foxtrot.core.table.TableMetadataManager;
 import com.google.common.collect.Lists;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * User: Santanu Sinha (santanu.sinha@flipkart.com)
@@ -53,14 +51,14 @@ public abstract class Action<P extends ActionRequest> {
     private final CacheManager cacheManager;
     private final ObjectMapper objectMapper;
     private P parameter;
-    private ElasticsearchConnection connection;
+    private SearchDatabaseConnection connection;
 
     protected Action(P parameter, AnalyticsLoader analyticsLoader) {
         this.parameter = parameter;
         this.tableMetadataManager = analyticsLoader.getTableMetadataManager();
         this.queryStore = analyticsLoader.getQueryStore();
         this.cacheManager = analyticsLoader.getCacheManager();
-        this.connection = analyticsLoader.getElasticsearchConnection();
+        this.connection = analyticsLoader.getSearchDatabaseConnection();
         this.objectMapper = analyticsLoader.getObjectMapper();
     }
 
@@ -108,11 +106,7 @@ public abstract class Action<P extends ActionRequest> {
     }
 
     public long getGetQueryTimeout() {
-        if (getConnection().getConfig() == null) {
-            return ElasticsearchConfig.DEFAULT_TIMEOUT;
-        }
-        return getConnection().getConfig()
-                .getGetQueryTimeout();
+        return getConnection().getGetQueryTimeout();
     }
 
     private void validateBase(P parameter) {
@@ -157,7 +151,7 @@ public abstract class Action<P extends ActionRequest> {
         return parameter;
     }
 
-    public ElasticsearchConnection getConnection() {
+    public SearchDatabaseConnection getConnection() {
         return connection;
     }
 
