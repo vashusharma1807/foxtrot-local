@@ -52,7 +52,7 @@ import com.flipkart.foxtrot.core.querystore.mutator.LargeTextNodeRemover;
 import com.flipkart.foxtrot.core.table.TableMetadataManager;
 import com.flipkart.foxtrot.core.table.impl.ElasticsearchTableMetadataManager;
 import com.flipkart.foxtrot.core.table.impl.ElasticsearchTestUtils;
-import com.flipkart.foxtrot.core.table.impl.TableMapStore;
+import com.flipkart.foxtrot.core.table.impl.TableElasticsearchMapStore;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -130,7 +130,7 @@ public class ElasticsearchQueryStoreTest {
 
         CardinalityConfig cardinalityConfig = new CardinalityConfig("true",
                 String.valueOf(ElasticsearchUtils.DEFAULT_SUB_LIST_SIZE));
-        TestUtils.ensureIndex(elasticsearchConnection, TableMapStore.TABLE_META_INDEX);
+        TestUtils.ensureIndex(elasticsearchConnection, TableElasticsearchMapStore.TABLE_META_INDEX);
         TestUtils.ensureIndex(elasticsearchConnection, ElasticsearchTableMetadataManager.CARDINALITY_CACHE_INDEX);
         this.tableMetadataManager = new ElasticsearchTableMetadataManager(hazelcastConnection, elasticsearchConnection, mapper, cardinalityConfig);
         tableMetadataManager.start();

@@ -34,6 +34,7 @@ import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConfig;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConnection;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchQueryStore;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchUtils;
+import com.flipkart.foxtrot.core.querystore.impl.HazelcastConnection;
 import com.flipkart.foxtrot.core.querystore.impl.OpensearchConnection;
 import com.flipkart.foxtrot.core.querystore.mutator.IndexerEventMutator;
 import com.flipkart.foxtrot.core.querystore.mutator.LargeTextNodeRemover;
@@ -41,6 +42,7 @@ import com.flipkart.foxtrot.core.table.TableManager;
 import com.flipkart.foxtrot.core.table.TableMetadataManager;
 import com.flipkart.foxtrot.core.table.impl.ElasticsearchTableMetadataManager;
 import com.flipkart.foxtrot.core.table.impl.FoxtrotTableManager;
+import com.flipkart.foxtrot.core.table.impl.OpensearchTableMetadataManager;
 import com.flipkart.foxtrot.server.SearchDatabaseType;
 import com.flipkart.foxtrot.server.auth.AuthConfig;
 import com.flipkart.foxtrot.server.auth.AuthStore;
@@ -371,4 +373,20 @@ public class FoxtrotModule extends AbstractModule {
                : new FqlStoreOpensearchServiceImpl(opensearchConnection, objectMapper);
     }
 
+    @Provides
+    @Singleton
+    public TableMetadataManager tableMetadataManager(FoxtrotServerConfiguration configuration,
+                                                     ObjectMapper objectMapper,
+                                                     ElasticsearchConnection elasticsearchConnection,
+                                                     OpensearchConnection opensearchConnection,
+                                                     HazelcastConnection hazelcastConnection,
+                                                     CardinalityConfig cardinalityConfig) {
+        bind(FqlStoreService.class).to(FqlStoreElasticsearchServiceImpl.class);
+        return configuration.getSearchDatabaseType()
+                       .equals(SearchDatabaseType.ELASTICSEARCH)
+               ? new ElasticsearchTableMetadataManager(hazelcastConnection, elasticsearchConnection, objectMapper,
+                cardinalityConfig)
+               : new OpensearchTableMetadataManager(hazelcastConnection, opensearchConnection, objectMapper,
+                       cardinalityConfig);
+    }
 }

@@ -7,6 +7,8 @@ import com.flipkart.foxtrot.common.query.Filter;
 import com.flipkart.foxtrot.common.query.ResultSort;
 import com.flipkart.foxtrot.common.util.CollectionUtils;
 import com.flipkart.foxtrot.core.common.Action;
+import com.flipkart.foxtrot.core.common.SearchActionRequest;
+import com.flipkart.foxtrot.core.common.SearchActionResponse;
 import com.flipkart.foxtrot.core.config.SearchDatabaseTuningConfig;
 import com.flipkart.foxtrot.core.exception.FoxtrotExceptions;
 import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsLoader;
@@ -14,12 +16,12 @@ import com.flipkart.foxtrot.core.querystore.actions.spi.AnalyticsProvider;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchUtils;
 import com.flipkart.foxtrot.core.util.ElasticsearchQueryUtils;
 import com.google.common.collect.Sets;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.search.aggregations.Aggregations;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
+//import org.elasticsearch.action.search.SearchRequest;
+//import org.elasticsearch.action.search.SearchResponse;
+//import org.elasticsearch.common.unit.TimeValue;
+//import org.elasticsearch.search.aggregations.Aggregations;
+//import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+//import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,7 +128,7 @@ public class DistinctAction extends Action<DistinctRequest> {
     }
 
     @Override
-    public SearchRequest getRequestBuilder(DistinctRequest request, List<Filter> extraFilters) {
+    public SearchActionRequest getRequestBuilder(DistinctRequest request, List<Filter> extraFilters) {
         try {
             return new SearchRequest(ElasticsearchUtils.getIndices(request.getTable(), request))
                     .indicesOptions(Utils.indicesOptions())
@@ -144,7 +146,7 @@ public class DistinctAction extends Action<DistinctRequest> {
     }
 
     @Override
-    public ActionResponse getResponse(org.elasticsearch.action.ActionResponse response, DistinctRequest parameter) {
+    public ActionResponse getResponse(SearchActionResponse response, DistinctRequest parameter) {
         Aggregations aggregations = ((SearchResponse) response).getAggregations();
         // Check if any aggregation is present or not
         if (aggregations == null) {

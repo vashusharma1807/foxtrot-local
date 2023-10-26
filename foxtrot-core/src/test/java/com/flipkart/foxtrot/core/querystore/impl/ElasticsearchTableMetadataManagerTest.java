@@ -35,7 +35,7 @@ import com.flipkart.foxtrot.core.datastore.DataStore;
 import com.flipkart.foxtrot.core.email.EmailConfig;
 import com.flipkart.foxtrot.core.querystore.mutator.IndexerEventMutator;
 import com.flipkart.foxtrot.core.querystore.mutator.LargeTextNodeRemover;
-import com.flipkart.foxtrot.core.table.impl.DistributedTableMetadataManager;
+import com.flipkart.foxtrot.core.table.impl.ElasticsearchTableMetadataManager;
 import com.flipkart.foxtrot.core.table.impl.ElasticsearchTestUtils;
 import com.google.common.collect.Lists;
 import com.hazelcast.config.Config;
@@ -62,7 +62,7 @@ public class ElasticsearchTableMetadataManagerTest {
 
     private DataStore dataStore;
     private ElasticsearchQueryStore queryStore;
-    private DistributedTableMetadataManager distributedTableMetadataManager;
+    private ElasticsearchTableMetadataManager elasticsearchTableMetadataManager;
     private IMap<String, Table> tableDataStore;
     private ObjectMapper objectMapper;
 
@@ -94,22 +94,22 @@ public class ElasticsearchTableMetadataManagerTest {
         when(hazelcastConnection.getHazelcastConfig()).thenReturn(new Config());
         hazelcastConnection.start();
 
-        this.distributedTableMetadataManager = new DistributedTableMetadataManager(hazelcastConnection,
+        this.elasticsearchTableMetadataManager = new ElasticsearchTableMetadataManager(hazelcastConnection,
                 elasticsearchConnection, objectMapper, new CardinalityConfig());
-        distributedTableMetadataManager.start();
+        elasticsearchTableMetadataManager.start();
 
         tableDataStore = hazelcastInstance.getMap("tablemetadatamap");
         List<IndexerEventMutator> mutators = Lists.newArrayList(new LargeTextNodeRemover(objectMapper,
                 TextNodeRemoverConfiguration.builder()
                         .build()));
-        this.queryStore = new ElasticsearchQueryStore(distributedTableMetadataManager, elasticsearchConnection,
+        this.queryStore = new ElasticsearchQueryStore(elasticsearchTableMetadataManager, elasticsearchConnection,
                 dataStore, mutators, objectMapper, new CardinalityConfig());
     }
 
     @After
     public void tearDown() throws Exception {
         ElasticsearchTestUtils.cleanupIndices(elasticsearchConnection);
-        distributedTableMetadataManager.stop();
+        elasticsearchTableMetadataManager.stop();
     }
 
     @Test
@@ -117,8 +117,8 @@ public class ElasticsearchTableMetadataManagerTest {
         Table table = new Table();
         table.setName("TEST_TABLE");
         table.setTtl(15);
-        distributedTableMetadataManager.save(table);
-        Table responseTable = distributedTableMetadataManager.get("TEST_TABLE");
+        elasticsearchTableMetadataManager.save(table);
+        Table responseTable = elasticsearchTableMetadataManager.get("TEST_TABLE");
         assertEquals(table.getName(), responseTable.getName());
         assertEquals(table.getTtl(), responseTable.getTtl());
     }
@@ -129,14 +129,14 @@ public class ElasticsearchTableMetadataManagerTest {
         table.setName(TestUtils.TEST_TABLE_NAME);
         table.setTtl(60);
         tableDataStore.put(TestUtils.TEST_TABLE_NAME, table);
-        Table response = distributedTableMetadataManager.get(table.getName());
+        Table response = elasticsearchTableMetadataManager.get(table.getName());
         assertEquals(table.getName(), response.getName());
         assertEquals(table.getTtl(), response.getTtl());
     }
 
     @Test
     public void testGetMissingTable() throws Exception {
-        Table response = distributedTableMetadataManager.get(TestUtils.TEST_TABLE + "-missing");
+        Table response = elasticsearchTableMetadataManager.get(TestUtils.TEST_TABLE + "-missing");
         assertNull(response);
     }
 
@@ -145,9 +145,9 @@ public class ElasticsearchTableMetadataManagerTest {
         Table table = new Table();
         table.setName(TestUtils.TEST_TABLE_NAME);
         table.setTtl(15);
-        distributedTableMetadataManager.save(table);
-        assertTrue(distributedTableMetadataManager.exists(table.getName()));
-        assertFalse(distributedTableMetadataManager.exists("DUMMY_TEST_NAME_NON_EXISTENT"));
+        elasticsearchTableMetadataManager.save(table);
+        assertTrue(elasticsearchTableMetadataManager.exists(table.getName()));
+        assertFalse(elasticsearchTableMetadataManager.exists("DUMMY_TEST_NAME_NON_EXISTENT"));
     }
 
     @Test
@@ -155,7 +155,7 @@ public class ElasticsearchTableMetadataManagerTest {
         Table table = new Table();
         table.setName(TestUtils.TEST_TABLE_NAME);
         table.setTtl(15);
-        distributedTableMetadataManager.save(table);
+        elasticsearchTableMetadataManager.save(table);
 
         Document document = TestUtils.getDocument("A", new DateTime().minusDays(1)
                 .getMillis(), new Object[]{"os", "android", "version", 1}, objectMapper);
@@ -164,13 +164,15 @@ public class ElasticsearchTableMetadataManagerTest {
                 .save(table, document);
         queryStore.save(TestUtils.TEST_TABLE_NAME, document);
 
-        document = TestUtils.getDocument("B", new DateTime().getMillis(), new Object[]{"os", "android", "version", "abcd"}, objectMapper);
+        document = TestUtils.getDocument("B", new DateTime().getMillis(),
+                new Object[]{"os", "android", "version", "abcd"}, objectMapper);
         translatedDocument = TestUtils.translatedDocumentWithRowKeyVersion1(table, document);
         doReturn(translatedDocument).when(dataStore)
                 .save(table, document);
         queryStore.save(TestUtils.TEST_TABLE_NAME, document);
 
-        TableFieldMapping tableFieldMapping = distributedTableMetadataManager.getFieldMappings(TestUtils.TEST_TABLE_NAME, true, true);
+        TableFieldMapping tableFieldMapping = elasticsearchTableMetadataManager.getFieldMappings(
+                TestUtils.TEST_TABLE_NAME, true, true);
         assertEquals(11, tableFieldMapping.getMappings()
                 .size());
 

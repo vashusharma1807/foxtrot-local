@@ -23,7 +23,8 @@ import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchUtils;
 import com.flipkart.foxtrot.core.querystore.impl.OpensearchConfig;
 import com.flipkart.foxtrot.core.querystore.impl.OpensearchConnection;
 import com.flipkart.foxtrot.core.querystore.impl.OpensearchUtils;
-import com.flipkart.foxtrot.core.table.impl.TableMapStore;
+import com.flipkart.foxtrot.core.table.impl.TableElasticsearchMapStore;
+import com.flipkart.foxtrot.core.table.impl.TableOpensearchMapStore;
 import com.flipkart.foxtrot.server.config.FoxtrotServerConfiguration;
 import com.flipkart.foxtrot.server.console.impl.ElasticsearchConsolePersistence;
 import com.flipkart.foxtrot.server.console.impl.OpensearchConsolePersistence;
@@ -84,7 +85,7 @@ public class InitializerCommand extends ConfiguredCommand<FoxtrotServerConfigura
 
             createOSMetaIndex(opensearchConnection, OpensearchConsolePersistence.INDEX, numReplicas);
             createOSMetaIndex(opensearchConnection, OpensearchConsolePersistence.INDEX_V2, numReplicas);
-            createOSMetaIndex(opensearchConnection, TableMapStore.TABLE_META_INDEX, numReplicas);
+            createOSMetaIndex(opensearchConnection, TableOpensearchMapStore.TABLE_META_INDEX, numReplicas);
             createOSMetaIndex(opensearchConnection, OpensearchConsolePersistence.INDEX_HISTORY, numReplicas);
             createOSMetaIndex(opensearchConnection, FqlStoreOpensearchServiceImpl.FQL_STORE_INDEX, numReplicas);
             createOSMetaIndex(opensearchConnection, "user-meta", numReplicas);
@@ -124,7 +125,7 @@ public class InitializerCommand extends ConfiguredCommand<FoxtrotServerConfigura
 
             createESMetaIndex(connection, ElasticsearchConsolePersistence.INDEX, numReplicas);
             createESMetaIndex(connection, ElasticsearchConsolePersistence.INDEX_V2, numReplicas);
-            createESMetaIndex(connection, TableMapStore.TABLE_META_INDEX, numReplicas);
+            createESMetaIndex(connection, TableElasticsearchMapStore.TABLE_META_INDEX, numReplicas);
             createESMetaIndex(connection, ElasticsearchConsolePersistence.INDEX_HISTORY, numReplicas);
             createESMetaIndex(connection, FqlStoreElasticsearchServiceImpl.FQL_STORE_INDEX, numReplicas);
             createESMetaIndex(connection, "user-meta", numReplicas);

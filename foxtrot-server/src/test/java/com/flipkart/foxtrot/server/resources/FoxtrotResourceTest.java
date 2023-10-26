@@ -34,7 +34,7 @@ import com.flipkart.foxtrot.core.querystore.mutator.LargeTextNodeRemover;
 import com.flipkart.foxtrot.core.table.TableMetadataManager;
 import com.flipkart.foxtrot.core.table.impl.ElasticsearchTableMetadataManager;
 import com.flipkart.foxtrot.core.table.impl.ElasticsearchTestUtils;
-import com.flipkart.foxtrot.core.table.impl.TableMapStore;
+import com.flipkart.foxtrot.core.table.impl.TableElasticsearchMapStore;
 import com.flipkart.foxtrot.server.config.FoxtrotServerConfiguration;
 import com.flipkart.foxtrot.server.providers.exception.FoxtrotExceptionMapper;
 import com.hazelcast.config.Config;
@@ -132,7 +132,7 @@ public abstract class FoxtrotResourceTest {
         cacheManager = new CacheManager(new DistributedCacheFactory(hazelcastConnection, mapper, new CacheConfig()));
 
         cardinalityConfig = new CardinalityConfig("true", String.valueOf(ElasticsearchUtils.DEFAULT_SUB_LIST_SIZE));
-        TestUtils.ensureIndex(elasticsearchConnection, TableMapStore.TABLE_META_INDEX);
+        TestUtils.ensureIndex(elasticsearchConnection, TableElasticsearchMapStore.TABLE_META_INDEX);
         TestUtils.ensureIndex(elasticsearchConnection, ElasticsearchTableMetadataManager.CARDINALITY_CACHE_INDEX);
         tableMetadataManager = new ElasticsearchTableMetadataManager(hazelcastConnection, elasticsearchConnection, mapper,
                 cardinalityConfig);

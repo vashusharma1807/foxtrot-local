@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.foxtrot.common.Table;
 import com.flipkart.foxtrot.core.TestUtils;
 import com.flipkart.foxtrot.core.table.impl.ElasticsearchTestUtils;
-import com.flipkart.foxtrot.core.table.impl.TableMapStore;
+import com.flipkart.foxtrot.core.table.impl.TableElasticsearchMapStore;
 import com.flipkart.foxtrot.core.util.Utils;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -56,13 +56,13 @@ import org.junit.Test;
  * Created by rishabh.goyal on 02/05/14.
  */
 @Slf4j
-public class TableMapStoreTest {
+public class TableElasticsearchMapStoreTest {
     public static final String TEST_TABLE = "test-table";
     public static final String TABLE_META_INDEX = "table-meta";
     public static final String TABLE_META_TYPE = "table-meta";
     private ObjectMapper mapper = new ObjectMapper();
     private static ElasticsearchConnection elasticsearchConnection;
-    private TableMapStore tableMapStore;
+    private TableElasticsearchMapStore tableElasticsearchMapStore;
 
 
     @BeforeClass
@@ -78,9 +78,9 @@ public class TableMapStoreTest {
 
     @Before
     public void setUp() throws Exception {
-        TestUtils.ensureIndex(elasticsearchConnection, TableMapStore.TABLE_META_INDEX);
-        TableMapStore.Factory factory = new TableMapStore.Factory(elasticsearchConnection);
-        tableMapStore = factory.newMapStore(null, null);
+        TestUtils.ensureIndex(elasticsearchConnection, TableElasticsearchMapStore.TABLE_META_INDEX);
+        TableElasticsearchMapStore.Factory factory = new TableElasticsearchMapStore.Factory(elasticsearchConnection);
+        tableElasticsearchMapStore = factory.newMapStore(null, null);
     }
 
     @After
@@ -94,7 +94,7 @@ public class TableMapStoreTest {
         Table table = new Table();
         table.setName(TEST_TABLE);
         table.setTtl(30);
-        tableMapStore.store(table.getName(), table);
+        tableElasticsearchMapStore.store(table.getName(), table);
 
         GetResponse response = elasticsearchConnection.getClient()
                 .get(new GetRequest(TABLE_META_INDEX, TABLE_META_TYPE, table.getName()), RequestOptions.DEFAULT);
@@ -106,7 +106,7 @@ public class TableMapStoreTest {
         Table table = new Table();
         table.setName(TEST_TABLE);
         table.setTtl(30);
-        tableMapStore.store(null, table);
+        tableElasticsearchMapStore.store(null, table);
     }
 
     @Test(expected = RuntimeException.class)
@@ -114,7 +114,7 @@ public class TableMapStoreTest {
         Table table = new Table();
         table.setName(TEST_TABLE);
         table.setTtl(30);
-        tableMapStore.store(table.getName(), null);
+        tableElasticsearchMapStore.store(table.getName(), null);
     }
 
     @Test(expected = RuntimeException.class)
@@ -122,7 +122,7 @@ public class TableMapStoreTest {
         Table table = new Table();
         table.setName(null);
         table.setTtl(30);
-        tableMapStore.store(TEST_TABLE, table);
+        tableElasticsearchMapStore.store(TEST_TABLE, table);
     }
 
     @Test
@@ -135,7 +135,7 @@ public class TableMapStoreTest {
             table.setTtl(20);
             tables.put(table.getName(), table);
         }
-        tableMapStore.storeAll(tables);
+        tableElasticsearchMapStore.storeAll(tables);
         MultiGetRequest multiGetRequest = new MultiGetRequest();
         tables.keySet()
                 .forEach(key -> multiGetRequest.add(TABLE_META_INDEX, TABLE_META_TYPE, key));
@@ -153,7 +153,7 @@ public class TableMapStoreTest {
 
     @Test(expected = RuntimeException.class)
     public void testStoreAllNull() throws Exception {
-        tableMapStore.storeAll(null);
+        tableElasticsearchMapStore.storeAll(null);
     }
 
     @Test(expected = RuntimeException.class)
@@ -166,7 +166,7 @@ public class TableMapStoreTest {
             table.setTtl(20);
             tables.put(null, table);
         }
-        tableMapStore.storeAll(tables);
+        tableElasticsearchMapStore.storeAll(tables);
     }
 
     @Test(expected = RuntimeException.class)
@@ -176,7 +176,7 @@ public class TableMapStoreTest {
             tables.put(UUID.randomUUID()
                                .toString(), null);
         }
-        tableMapStore.storeAll(tables);
+        tableElasticsearchMapStore.storeAll(tables);
     }
 
     @Test(expected = RuntimeException.class)
@@ -185,7 +185,7 @@ public class TableMapStoreTest {
         for(int i = 0; i < 10; i++) {
             tables.put(null, null);
         }
-        tableMapStore.storeAll(tables);
+        tableElasticsearchMapStore.storeAll(tables);
     }
 
     @Test(expected = RuntimeException.class)
@@ -204,7 +204,7 @@ public class TableMapStoreTest {
                               .toString());
         table.setTtl(20);
         tables.put(null, table);
-        tableMapStore.storeAll(tables);
+        tableElasticsearchMapStore.storeAll(tables);
     }
 
     @Test(expected = RuntimeException.class)
@@ -223,7 +223,7 @@ public class TableMapStoreTest {
                               .toString());
         table.setTtl(20);
         tables.put(table.getName(), null);
-        tableMapStore.storeAll(tables);
+        tableElasticsearchMapStore.storeAll(tables);
     }
 
     @Test(expected = RuntimeException.class)
@@ -237,7 +237,7 @@ public class TableMapStoreTest {
             tables.put(table.getName(), table);
         }
         tables.put(null, null);
-        tableMapStore.storeAll(tables);
+        tableElasticsearchMapStore.storeAll(tables);
     }
 
 
@@ -246,12 +246,12 @@ public class TableMapStoreTest {
         Table table = new Table();
         table.setName(TEST_TABLE);
         table.setTtl(30);
-        tableMapStore.store(table.getName(), table);
+        tableElasticsearchMapStore.store(table.getName(), table);
         GetResponse response = elasticsearchConnection.getClient()
                 .get(new GetRequest(TABLE_META_INDEX, TABLE_META_TYPE, table.getName()), RequestOptions.DEFAULT);
         assertTrue(response.isExists());
 
-        tableMapStore.delete(table.getName());
+        tableElasticsearchMapStore.delete(table.getName());
         response = elasticsearchConnection.getClient()
                 .get(new GetRequest(TABLE_META_INDEX, TABLE_META_TYPE, table.getName()), RequestOptions.DEFAULT);
         assertFalse(response.isExists());
@@ -259,13 +259,13 @@ public class TableMapStoreTest {
 
     @Test(expected = RuntimeException.class)
     public void testDeleteNullKey() throws Exception {
-        tableMapStore.delete(null);
+        tableElasticsearchMapStore.delete(null);
     }
 
     //TODO Why it didn't throw any exception ?
     @Test
     public void testDeleteMissingKey() throws Exception {
-        tableMapStore.delete("HELLO");
+        tableElasticsearchMapStore.delete("HELLO");
     }
 
 
@@ -279,14 +279,14 @@ public class TableMapStoreTest {
             table.setTtl(20);
             tables.put(table.getName(), table);
         }
-        tableMapStore.storeAll(tables);
+        tableElasticsearchMapStore.storeAll(tables);
         for(String name : tables.keySet()) {
             GetResponse response = elasticsearchConnection.getClient()
                     .get(new GetRequest(TABLE_META_INDEX, TABLE_META_TYPE, name), RequestOptions.DEFAULT);;
             assertTrue(response.isExists());
         }
 
-        tableMapStore.deleteAll(tables.keySet());
+        tableElasticsearchMapStore.deleteAll(tables.keySet());
         for(String name : tables.keySet()) {
             GetResponse response = elasticsearchConnection.getClient()
                     .get(new GetRequest(TABLE_META_INDEX, TABLE_META_TYPE, name), RequestOptions.DEFAULT);;
@@ -297,7 +297,7 @@ public class TableMapStoreTest {
 
     @Test(expected = RuntimeException.class)
     public void testDeleteAllNull() throws Exception {
-        tableMapStore.deleteAll(null);
+        tableElasticsearchMapStore.deleteAll(null);
     }
 
     @Test(expected = RuntimeException.class)
@@ -305,7 +305,7 @@ public class TableMapStoreTest {
         List<String> keys = new ArrayList<String>();
         keys.add(null);
         keys.add(null);
-        tableMapStore.deleteAll(keys);
+        tableElasticsearchMapStore.deleteAll(keys);
     }
 
 
@@ -322,20 +322,20 @@ public class TableMapStoreTest {
                         .id(table.getName())
                         .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT);
 
-        Table responseTable = tableMapStore.load(table.getName());
+        Table responseTable = tableElasticsearchMapStore.load(table.getName());
         compareTables(table, responseTable);
     }
 
     @Test
     public void testLoadMissingKey() throws Exception {
-        assertNull(tableMapStore.load(UUID.randomUUID()
+        assertNull(tableElasticsearchMapStore.load(UUID.randomUUID()
                                               .toString()));
     }
 
     //TODO Why not an error ?
     @Test
     public void testLoadNullKey() throws Exception {
-        assertNull(tableMapStore.load(UUID.randomUUID()
+        assertNull(tableElasticsearchMapStore.load(UUID.randomUUID()
                                               .toString()));
     }
 
@@ -348,7 +348,7 @@ public class TableMapStoreTest {
                                .source("{ \"test\" : \"test\"}")
                                .id(TEST_TABLE)
                                .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE), RequestOptions.DEFAULT);
-        tableMapStore.load(TEST_TABLE);
+        tableElasticsearchMapStore.load(TEST_TABLE);
     }
 
 
@@ -372,7 +372,7 @@ public class TableMapStoreTest {
         }
 
         Set<String> names = ImmutableSet.copyOf(Iterables.limit(tables.keySet(), 5));
-        Map<String, Table> responseTables = tableMapStore.loadAll(names);
+        Map<String, Table> responseTables = tableElasticsearchMapStore.loadAll(names);
         assertEquals(names.size(), responseTables.size());
         for(String name : names) {
             compareTables(tables.get(name), responseTables.get(name));
@@ -381,7 +381,7 @@ public class TableMapStoreTest {
 
     @Test(expected = NullPointerException.class)
     public void testLoadAllNull() throws Exception {
-        tableMapStore.loadAll(null);
+        tableElasticsearchMapStore.loadAll(null);
     }
 
     @Test(expected = RuntimeException.class)
@@ -392,7 +392,7 @@ public class TableMapStoreTest {
                                .source("{ \"test\" : \"test\"}")
                                .id(TEST_TABLE)
                                .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE));
-        tableMapStore.loadAll(Arrays.asList(TEST_TABLE));
+        tableElasticsearchMapStore.loadAll(Arrays.asList(TEST_TABLE));
     }
 
 
@@ -415,7 +415,7 @@ public class TableMapStoreTest {
                             RequestOptions.DEFAULT);
         }
 
-        Set<String> responseKeys = tableMapStore.loadAllKeys();
+        Set<String> responseKeys = tableElasticsearchMapStore.loadAllKeys();
         for(String name : tables.keySet()) {
             assertTrue(responseKeys.contains(name));
         }

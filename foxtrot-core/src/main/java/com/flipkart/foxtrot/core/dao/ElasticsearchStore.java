@@ -1,12 +1,19 @@
 package com.flipkart.foxtrot.core.dao;
 
+import static com.flipkart.foxtrot.core.util.ElasticsearchQueryUtils.QUERY_SIZE;
+
 import com.collections.CollectionUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.foxtrot.common.TableFieldMapping;
+import com.flipkart.foxtrot.common.count.CountRequest;
+import com.flipkart.foxtrot.common.query.Filter;
+import com.flipkart.foxtrot.core.common.SearchActionRequest;
+import com.flipkart.foxtrot.core.common.SearchActionResponse;
 import com.flipkart.foxtrot.core.querystore.SearchDatabaseConnection;
 import com.flipkart.foxtrot.core.querystore.actions.Utils;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchConnection;
 import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchUtils;
+import com.flipkart.foxtrot.core.util.ElasticsearchQueryUtils;
 import com.flipkart.foxtrot.core.util.MetricUtil;
 import com.google.common.base.Stopwatch;
 import com.google.inject.Inject;
@@ -19,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
 import lombok.val;
+import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.admin.indices.forcemerge.ForceMergeRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -34,6 +42,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.metrics.cardinality.CardinalityAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
@@ -188,6 +197,28 @@ public class ElasticsearchStore implements SearchStore {
                     .registerActionSuccess("indexesOptimized", CollectionUtils.mkString(indices, ","),
                             stopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
+    }
+
+    @Override
+    public SearchActionRequest createSearchRequest(CountRequest parameter,
+                                                   List<Filter> extraFilters,
+                                                   int precisionThreshold) {
+        CardinalityAggregationBuilder cardinalityAggregationBuilder = null;
+        if (parameter.isDistinct()) {
+            cardinalityAggregationBuilder = Utils.buildCardinalityAggregation(parameter.getField(), precisionThreshold);
+        }
+
+        return ((SearchActionRequest) ((ActionRequest) new SearchRequest(
+                ElasticsearchUtils.getIndices(parameter.getTable(), parameter)).indicesOptions(Utils.indicesOptions())
+                .source(new SearchSourceBuilder().size(QUERY_SIZE)
+                        .query(ElasticsearchQueryUtils.translateFilter(parameter, extraFilters))
+                        .aggregation(cardinalityAggregationBuilder))));
+    }
+
+    @Override
+    public SearchActionResponse getSearchResults(SearchActionRequest request) throws IOException {
+        return (SearchActionResponse) elasticsearchConnection.getClient()
+                .search((SearchRequest) (ActionRequest) request, RequestOptions.DEFAULT);
     }
 
 }

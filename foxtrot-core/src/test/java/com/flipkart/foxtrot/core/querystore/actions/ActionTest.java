@@ -21,7 +21,7 @@ import com.flipkart.foxtrot.core.querystore.mutator.IndexerEventMutator;
 import com.flipkart.foxtrot.core.querystore.mutator.LargeTextNodeRemover;
 import com.flipkart.foxtrot.core.table.impl.ElasticsearchTableMetadataManager;
 import com.flipkart.foxtrot.core.table.impl.ElasticsearchTestUtils;
-import com.flipkart.foxtrot.core.table.impl.TableMapStore;
+import com.flipkart.foxtrot.core.table.impl.TableElasticsearchMapStore;
 import com.google.common.collect.Lists;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
@@ -77,7 +77,7 @@ public abstract class ActionTest {
         when(hazelcastConnection.getHazelcastConfig()).thenReturn(hazelcastInstance.getConfig());
         CardinalityConfig cardinalityConfig = new CardinalityConfig("true", String.valueOf(ElasticsearchUtils.DEFAULT_SUB_LIST_SIZE));
 
-        TestUtils.ensureIndex(elasticSearchDatabaseConnection, TableMapStore.TABLE_META_INDEX);
+        TestUtils.ensureIndex(elasticSearchDatabaseConnection, TableElasticsearchMapStore.TABLE_META_INDEX);
         TestUtils.ensureIndex(elasticSearchDatabaseConnection, ElasticsearchTableMetadataManager.CARDINALITY_CACHE_INDEX);
         ElasticsearchUtils.initializeMappings(elasticSearchDatabaseConnection.getClient());
         tableMetadataManager = new ElasticsearchTableMetadataManager(hazelcastConnection, elasticSearchDatabaseConnection, mapper, cardinalityConfig);

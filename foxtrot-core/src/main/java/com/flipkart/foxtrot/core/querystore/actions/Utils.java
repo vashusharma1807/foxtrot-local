@@ -1,6 +1,8 @@
 package com.flipkart.foxtrot.core.querystore.actions;
 
 
+import static com.flipkart.foxtrot.core.util.ElasticsearchQueryUtils.QUERY_SIZE;
+
 import com.flipkart.foxtrot.common.FieldMetadata;
 import com.flipkart.foxtrot.common.FieldType;
 import com.flipkart.foxtrot.common.Period;
@@ -14,28 +16,17 @@ import com.flipkart.foxtrot.core.querystore.impl.ElasticsearchUtils;
 import com.flipkart.foxtrot.core.table.TableMetadataManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import lombok.val;
-//import org.elasticsearch.action.support.IndicesOptions;
-//import org.elasticsearch.search.aggregations.*;
-//import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggregationBuilder;
-//import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
-//import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
-//import org.elasticsearch.search.aggregations.metrics.avg.ParsedAvg;
-//import org.elasticsearch.search.aggregations.metrics.cardinality.CardinalityAggregationBuilder;
-//import org.elasticsearch.search.aggregations.metrics.max.ParsedMax;
-//import org.elasticsearch.search.aggregations.metrics.min.ParsedMin;
-//import org.elasticsearch.search.aggregations.metrics.percentiles.Percentile;
-//import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
-//import org.elasticsearch.search.aggregations.metrics.stats.ParsedStats;
-//import org.elasticsearch.search.aggregations.metrics.stats.extended.ParsedExtendedStats;
-//import org.elasticsearch.search.aggregations.metrics.sum.ParsedSum;
-//import org.elasticsearch.search.aggregations.metrics.valuecount.ParsedValueCount;
 import org.elasticsearch.action.support.IndicesOptions;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.metrics.cardinality.CardinalityAggregationBuilder;
 import org.joda.time.DateTimeZone;
-
-import java.util.*;
-
-import static com.flipkart.foxtrot.core.util.ElasticsearchQueryUtils.QUERY_SIZE;
 
 /**
  * Created by rishabh.goyal on 24/08/14.
@@ -197,13 +188,15 @@ public class Utils {
     }
 
     public static CardinalityAggregationBuilder buildCardinalityAggregation(String field, int precisionThreshold) {
+        if (field == null) {
+            return null;
+        }
         if (0 == precisionThreshold) {
             precisionThreshold = PRECISION_THRESHOLD;
         }
         return AggregationBuilders.cardinality(Utils.sanitizeFieldForAggregation(field))
                 .precisionThreshold(precisionThreshold)
                 .field(storedFieldName(field));
-
     }
 
     public static String sanitizeFieldForAggregation(String field) {

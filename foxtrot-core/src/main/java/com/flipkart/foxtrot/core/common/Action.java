@@ -25,6 +25,7 @@ import com.flipkart.foxtrot.common.query.general.AnyFilter;
 import com.flipkart.foxtrot.common.query.numeric.LessThanFilter;
 import com.flipkart.foxtrot.common.util.CollectionUtils;
 import com.flipkart.foxtrot.core.cache.CacheManager;
+import com.flipkart.foxtrot.core.dao.SearchStore;
 import com.flipkart.foxtrot.core.exception.FoxtrotExceptions;
 import com.flipkart.foxtrot.core.exception.MalformedQueryException;
 import com.flipkart.foxtrot.core.querystore.QueryStore;
@@ -45,6 +46,7 @@ import org.slf4j.LoggerFactory;
  * Time: 12:23 AM
  */
 public abstract class Action<P extends ActionRequest> {
+
     private static final Logger logger = LoggerFactory.getLogger(Action.class.getSimpleName());
     private final TableMetadataManager tableMetadataManager;
     private final QueryStore queryStore;
@@ -53,13 +55,17 @@ public abstract class Action<P extends ActionRequest> {
     private P parameter;
     private SearchDatabaseConnection connection;
 
-    protected Action(P parameter, AnalyticsLoader analyticsLoader) {
+    private SearchStore searchStore;
+
+    protected Action(P parameter,
+                     AnalyticsLoader analyticsLoader) {
         this.parameter = parameter;
         this.tableMetadataManager = analyticsLoader.getTableMetadataManager();
         this.queryStore = analyticsLoader.getQueryStore();
         this.cacheManager = analyticsLoader.getCacheManager();
         this.connection = analyticsLoader.getSearchDatabaseConnection();
         this.objectMapper = analyticsLoader.getObjectMapper();
+        this.searchStore = analyticsLoader.getSearchStore();
     }
 
     public String cacheKey() {
@@ -138,9 +144,11 @@ public abstract class Action<P extends ActionRequest> {
 
     public abstract String getRequestCacheKey();
 
-    public abstract org.elasticsearch.action.ActionRequest getRequestBuilder(P parameter, List<Filter> extraFilters);
+    public abstract SearchActionRequest getRequestBuilder(P parameter,
+                                                          List<Filter> extraFilters);
 
-    public abstract ActionResponse getResponse(org.elasticsearch.action.ActionResponse response, P parameter);
+    public abstract ActionResponse getResponse(SearchActionResponse response,
+                                               P parameter);
 
 
     public abstract void validateImpl(P parameter);
@@ -153,6 +161,10 @@ public abstract class Action<P extends ActionRequest> {
 
     public SearchDatabaseConnection getConnection() {
         return connection;
+    }
+
+    public SearchStore getSearchStore() {
+        return searchStore;
     }
 
     public TableMetadataManager getTableMetadataManager() {

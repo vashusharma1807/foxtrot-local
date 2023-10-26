@@ -1,5 +1,10 @@
 package com.flipkart.foxtrot.core.dao;
 
+import com.flipkart.foxtrot.common.ActionRequest;
+import com.flipkart.foxtrot.common.count.CountRequest;
+import com.flipkart.foxtrot.common.query.Filter;
+import com.flipkart.foxtrot.core.common.SearchActionRequest;
+import com.flipkart.foxtrot.core.common.SearchActionResponse;
 import com.flipkart.foxtrot.core.querystore.SearchDatabaseConnection;
 import java.io.IOException;
 import java.io.Serializable;
@@ -37,7 +42,14 @@ public interface SearchStore {
                                                                       int from,
                                                                       int maxSize) throws IOException;
 
-     void optimize(int batchSize,int segmentsToOptimize) throws IOException;
+     void optimize(int batchSize,
+                   int segmentsToOptimize) throws IOException;
+
+     SearchActionRequest createSearchRequest(CountRequest countRequest,
+                                             List<Filter> extraFilters,
+                                             int precisionThreshold);
+
+     SearchActionResponse getSearchResults(SearchActionRequest request) throws IOException;
 
      //ActionResponse getResponse();
 

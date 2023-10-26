@@ -22,7 +22,12 @@ import com.flipkart.foxtrot.common.FieldMetadata;
 import com.flipkart.foxtrot.common.FieldType;
 import com.flipkart.foxtrot.common.Table;
 import com.flipkart.foxtrot.common.TableFieldMapping;
-import com.flipkart.foxtrot.common.estimation.*;
+import com.flipkart.foxtrot.common.estimation.CardinalityEstimationData;
+import com.flipkart.foxtrot.common.estimation.EstimationData;
+import com.flipkart.foxtrot.common.estimation.EstimationDataVisitor;
+import com.flipkart.foxtrot.common.estimation.FixedEstimationData;
+import com.flipkart.foxtrot.common.estimation.PercentileEstimationData;
+import com.flipkart.foxtrot.common.estimation.TermHistogramEstimationData;
 import com.flipkart.foxtrot.common.util.CollectionUtils;
 import com.flipkart.foxtrot.core.cardinality.CardinalityConfig;
 import com.flipkart.foxtrot.core.exception.FoxtrotExceptions;
@@ -43,41 +48,50 @@ import com.hazelcast.config.MapConfig;
 import com.hazelcast.config.MapStoreConfig;
 import com.hazelcast.config.NearCacheConfig;
 import com.hazelcast.map.IMap;
-import lombok.SneakyThrows;
-//TODO
-//import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
-//import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
-//import org.elasticsearch.action.index.IndexRequest;
-//import org.elasticsearch.action.search.MultiSearchRequest;
-//import org.elasticsearch.action.search.MultiSearchResponse;
-//import org.elasticsearch.action.search.SearchRequest;
-//import org.elasticsearch.action.search.SearchResponse;
-//import org.elasticsearch.client.RequestOptions;
-//import org.elasticsearch.client.RestHighLevelClient;
-//import org.elasticsearch.common.unit.TimeValue;
-//import org.elasticsearch.common.xcontent.XContentType;
-//import org.elasticsearch.index.query.QueryBuilders;
-//import org.elasticsearch.search.SearchHit;
-//import org.elasticsearch.search.aggregations.Aggregation;
-//import org.elasticsearch.search.aggregations.AggregationBuilders;
-//import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-//import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality;
-//import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
-//import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import ru.vyarus.dropwizard.guice.module.installer.order.Order;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import lombok.SneakyThrows;
+import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
+import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.search.MultiSearchRequest;
+import org.elasticsearch.action.search.MultiSearchResponse;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality;
+import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.vyarus.dropwizard.guice.module.installer.order.Order;
 
 /**
  * User: Santanu Sinha (santanu.sinha@flipkart.com)
@@ -86,18 +100,19 @@ import java.util.stream.Stream;
  */
 @Singleton
 @Order(15)
-public class DistributedTableMetadataManager implements TableMetadataManager {
+public class ElasticsearchTableMetadataManager implements TableMetadataManager {
+
     public static final String CARDINALITY_CACHE_INDEX = "table_cardinality_cache";
-    private static final Logger logger = LoggerFactory.getLogger(DistributedTableMetadataManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(ElasticsearchTableMetadataManager.class);
     private static final String DATA_MAP = "tablemetadatamap";
     private static final String FIELD_MAP = "tablefieldmap";
     private static final String CARDINALITY_FIELD_MAP = "cardinalitytablefieldmap";
     private static final String CARDINALITY = "cardinality";
     private static final int PRECISION_THRESHOLD = 100;
-    private static final int TIME_TO_LIVE_CACHE = (int)TimeUnit.MINUTES.toSeconds(15);
-    private static final int TIME_TO_LIVE_TABLE_CACHE = (int)TimeUnit.DAYS.toSeconds(30);
-    private static final int TIME_TO_LIVE_CARDINALITY_CACHE = (int)TimeUnit.DAYS.toSeconds(7);
-    private static final int TIME_TO_NEAR_CACHE = (int)TimeUnit.MINUTES.toSeconds(15);
+    private static final int TIME_TO_LIVE_CACHE = (int) TimeUnit.MINUTES.toSeconds(15);
+    private static final int TIME_TO_LIVE_TABLE_CACHE = (int) TimeUnit.DAYS.toSeconds(30);
+    private static final int TIME_TO_LIVE_CARDINALITY_CACHE = (int) TimeUnit.DAYS.toSeconds(7);
+    private static final int TIME_TO_NEAR_CACHE = (int) TimeUnit.MINUTES.toSeconds(15);
     private final HazelcastConnection hazelcastConnection;
     private final ElasticsearchConnection elasticsearchConnection;
     private final ObjectMapper mapper;
@@ -107,8 +122,10 @@ public class DistributedTableMetadataManager implements TableMetadataManager {
     private IMap<String, TableFieldMapping> fieldDataCardinalityCache;
 
     @Inject
-    public DistributedTableMetadataManager(HazelcastConnection hazelcastConnection, ElasticsearchConnection elasticsearchConnection,
-                                           ObjectMapper mapper, CardinalityConfig cardinalityConfig) {
+    public ElasticsearchTableMetadataManager(HazelcastConnection hazelcastConnection,
+                                             ElasticsearchConnection elasticsearchConnection,
+                                             ObjectMapper mapper,
+                                             CardinalityConfig cardinalityConfig) {
         this.hazelcastConnection = hazelcastConnection;
         this.elasticsearchConnection = elasticsearchConnection;
         this.mapper = mapper;
@@ -187,7 +204,7 @@ public class DistributedTableMetadataManager implements TableMetadataManager {
         mapConfig.setBackupCount(0);
 
         MapStoreConfig mapStoreConfig = new MapStoreConfig();
-        mapStoreConfig.setFactoryImplementation(TableMapStore.factory(elasticsearchConnection));
+        mapStoreConfig.setFactoryImplementation(TableElasticsearchMapStore.factory(elasticsearchConnection));
         mapStoreConfig.setEnabled(true);
         mapStoreConfig.setInitialLoadMode(MapStoreConfig.InitialLoadMode.EAGER);
         mapConfig.setMapStoreConfig(mapStoreConfig);

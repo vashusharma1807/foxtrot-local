@@ -21,6 +21,7 @@ import com.flipkart.foxtrot.common.ActionRequest;
 import com.flipkart.foxtrot.core.cache.CacheManager;
 import com.flipkart.foxtrot.core.common.Action;
 import com.flipkart.foxtrot.core.config.SearchDatabaseTuningConfig;
+import com.flipkart.foxtrot.core.dao.SearchStore;
 import com.flipkart.foxtrot.core.datastore.DataStore;
 import com.flipkart.foxtrot.core.exception.AnalyticsActionLoaderException;
 import com.flipkart.foxtrot.core.exception.FoxtrotExceptions;
@@ -62,23 +63,25 @@ public class AnalyticsLoader implements Managed {
     private final TableMetadataManager tableMetadataManager;
     private final DataStore dataStore;
     private final QueryStore queryStore;
-    private final SearchDatabaseConnection SearchDatabaseConnection;
+    private final SearchDatabaseConnection searchDatabaseConnection;
     private final SearchDatabaseTuningConfig searchDatabaseTuningConfig;
     private final CacheManager cacheManager;
     private final ObjectMapper objectMapper;
+    private final SearchStore searchStore;
 
     @Inject
     public AnalyticsLoader(
             TableMetadataManager tableMetadataManager, DataStore dataStore, QueryStore queryStore,
-            SearchDatabaseConnection SearchDatabaseConnection, CacheManager cacheManager,
-            ObjectMapper objectMapper, SearchDatabaseTuningConfig searchDatabaseTuningConfig) {
+            SearchDatabaseConnection searchDatabaseConnection, CacheManager cacheManager,
+            ObjectMapper objectMapper, SearchDatabaseTuningConfig searchDatabaseTuningConfig,SearchStore searchStore) {
         this.tableMetadataManager = tableMetadataManager;
         this.dataStore = dataStore;
         this.queryStore = queryStore;
-        this.SearchDatabaseConnection = SearchDatabaseConnection;
+        this.searchDatabaseConnection = searchDatabaseConnection;
         this.cacheManager = cacheManager;
         this.objectMapper = objectMapper;
         this.searchDatabaseTuningConfig = searchDatabaseTuningConfig;
+        this.searchStore = searchStore;
     }
 
     @SuppressWarnings("unchecked")
